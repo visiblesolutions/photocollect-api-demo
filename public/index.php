@@ -78,7 +78,7 @@ $app->get('/', function (Request $request, Response $response) use ($baseHref, $
     return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
 });
 
-$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson): Response {
+$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
     $redirectUri = trim((string) ($data['redirect_uri'] ?? ''));
@@ -94,7 +94,7 @@ $app->post('/api/deeplink', function (Request $request, Response $response) use 
     }
 });
 
-$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson): Response {
+$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
 
