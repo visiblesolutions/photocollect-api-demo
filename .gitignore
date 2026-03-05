@@ -1,2 +1,4 @@
 vendor/
 app.ini
+.DS_Store
+.idea/
