@@ -6,6 +6,11 @@ body {
   font-family: "Space Grotesk", sans-serif;
 }
 
+p a {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
 .btn-primary,
 .btn-secondary {
   text-decoration: none;

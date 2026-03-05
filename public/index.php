@@ -14,6 +14,15 @@ if ($config === false) {
     throw new RuntimeException('Unable to load config/app.ini.');
 }
 
+$requiredConfigKeys = ['api_base_url', 'web_base_url', 'site_code', 'api_key', 'deeplink_secret'];
+$missingConfigKeys = array_filter(
+    $requiredConfigKeys,
+    static fn (string $key): bool => !array_key_exists($key, $config)
+);
+if ($missingConfigKeys !== []) {
+    throw new RuntimeException('Missing required config key(s) in config/app.ini: ' . implode(', ', $missingConfigKeys));
+}
+
 $basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/.');
 $basePath = $basePath === '/' ? '' : $basePath;
 $baseHref = $basePath === '' ? '/' : $basePath . '/';
@@ -27,11 +36,11 @@ if ($basePath !== '') {
 }
 
 $client = new PhotoCollectClient(
-    apiBaseUrl: (string) ($config['api_base_url'] ?? 'https://demo.photocollect.io/apiv1'),
-    webBaseUrl: (string) ($config['web_base_url'] ?? 'https://demo.photocollect.io'),
-    siteCode: (string) ($config['site_code'] ?? 'api-demo'),
-    apiKey: (string) ($config['api_key'] ?? ''),
-    deeplinkSecret: (string) ($config['deeplink_secret'] ?? ''),
+    apiBaseUrl: (string) $config['api_base_url'],
+    webBaseUrl: (string) $config['web_base_url'],
+    siteCode: (string) $config['site_code'],
+    apiKey: (string) $config['api_key'],
+    deeplinkSecret: (string) $config['deeplink_secret'],
 );
 
 $writeJson = static function (Response $response, array $payload, int $status = 200): Response {
@@ -46,9 +55,23 @@ $generateCustomerNo = static function (): string {
     return substr(bin2hex(random_bytes(8)), 0, 16);
 };
 
-$app->get('/', function (Request $request, Response $response) use ($baseHref): Response {
+$app->get('/', function (Request $request, Response $response) use ($baseHref, $config): Response {
     $template = file_get_contents(__DIR__ . '/../templates/app.html');
-    $html = str_replace('__BASE_HREF__', htmlspecialchars($baseHref, ENT_QUOTES, 'UTF-8'), $template ?: '');
+    $baseUrl = (string) $config['web_base_url'];
+    $apiBaseDisplay = (string) parse_url($baseUrl, PHP_URL_HOST);
+    if ($apiBaseDisplay === '') {
+        $apiBaseDisplay = $baseUrl;
+    }
+
+    $html = str_replace(
+        ['__BASE_HREF__', '__SITE_CODE__', '__API_BASE_URL__'],
+        [
+            htmlspecialchars($baseHref, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars((string) $config['site_code'], ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($apiBaseDisplay, ENT_QUOTES, 'UTF-8'),
+        ],
+        $template ?: ''
+    );
 
     $response->getBody()->write($html);
 
