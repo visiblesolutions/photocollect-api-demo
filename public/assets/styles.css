@@ -1,0 +1,79 @@
+html {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.btn-primary,
+.btn-secondary {
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: #145aff;
+  border: 1px solid #145aff;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #0f46cc;
+  border-color: #0f46cc;
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background-color: #ffffff;
+  border: 1px solid #145aff;
+  color: #145aff;
+}
+
+.btn-secondary:hover {
+  background-color: #145aff;
+  color: #ffffff;
+}
+
+.page-shell {
+  background:
+    radial-gradient(circle at top left, rgba(20, 90, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 80% 15%, rgba(56, 189, 248, 0.14), transparent 24%),
+    linear-gradient(135deg, #e2e8f0 0%, #f8fafc 45%, #dbeafe 100%);
+}
+
+.ambient {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.75;
+}
+
+.ambient-one {
+  top: -8rem;
+  left: -5rem;
+  height: 18rem;
+  width: 18rem;
+  background: rgba(20, 90, 255, 0.2);
+}
+
+.ambient-two {
+  right: -6rem;
+  bottom: -4rem;
+  height: 20rem;
+  width: 20rem;
+  background: rgba(56, 189, 248, 0.18);
+}
+
+#qrCanvas {
+  max-width: 100%;
+  height: auto;
+}
+
+#resultImage {
+  max-height: 520px;
+}
+
+::selection {
+  background: rgba(20, 90, 255, 0.18);
+  color: #0f172a;
+}

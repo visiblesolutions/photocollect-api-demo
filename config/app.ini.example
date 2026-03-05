@@ -1,0 +1,5 @@
+api_base_url = "https://demo.photocollect.io/apiv1"
+web_base_url = "https://demo.photocollect.io"
+site_code = ""
+api_key = ""
+deeplink_secret = ""

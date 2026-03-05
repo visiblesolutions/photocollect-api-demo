@@ -1,0 +1,16 @@
+{
+  "name": "photocollect/api-demo",
+  "description": "Photo Collect API demo app built with Slim and vanilla JavaScript",
+  "type": "project",
+  "require": {
+    "guzzlehttp/guzzle": "^7.9",
+    "php": "^8.1",
+    "slim/slim": "^4.14",
+    "slim/psr7": "^1.7"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  }
+}
