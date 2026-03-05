@@ -43,50 +43,48 @@
 
           <section id="screen-start" data-screen class="space-y-8">
             <div class="space-y-5">
-              <p class="text-sm font-medium uppercase tracking-[0.2em] text-brand">API Demo</p>
               <h1 class="max-w-2xl text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl">
-                Request Launchpad
+                Integration Demo
               </h1>
               <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Use this demo to create a photo request. Choose either Deeplink or API to start the flow. The demo generates a random <var>customer_no</var> (e.g. employee number, customer number, or process ID) to identify the user.              </p>
+                  Photo Collect can be integrated into any IT infrastructure for uploading, processing and returning ID photos. There are two options:
+              </p>
                 <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                    <strong>Deeplink:</strong> Use this if you want to display a link or button that starts the photo upload without creating an API request each time the page is shown.
+                    <strong>Deeplink:</strong> Generate a parametrized upload link without an API call.
                 </p>
                 <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                    <strong>API:</strong> Use this if the process is triggered by a backend event and you want Photo Collect to act as a status engine for pending requests.
+                    <strong>API:</strong> Creates an upload link, Photo Collect tracks pending requests.
                 </p>
                 <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                    After the photo is uploaded, the flow returns to this demo to fetch and display the exported photo.
+                    After a photo is uploaded, the flow returns to this demo to fetch and display the exported photo.
                 </p>
             </div>
 
             <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Generated customer_no</p>
-                  <p id="customerNoBadge" class="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950"></p>
-                </div>
+              <div class="flex items-center justify-between gap-4">
+                <p id="customerNoBadge" class="text-2xl font-semibold tracking-[-0.03em] text-slate-950"></p>
                 <button id="refreshCustomerNo" type="button" class="btn-secondary inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition">
                   Regenerate
                 </button>
               </div>
+              <p class="mt-2 text-sm leading-6 text-slate-600">This auto-generated identifier would be an employee number, citizen id or process id.</p>
             </div>
 
             <div class="grid gap-4 lg:grid-cols-2">
               <button id="startDeeplink" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
-                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">Deeplink</span>
+                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">Deeplink</span>
                 <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Signed URL</h2>
                 <p class="mt-3 text-sm leading-6 text-slate-600">
-                   Builds a signed deeplink. No request is made to the API.
+                   Creates a Deeplink URL.
                 </p>
                 <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue with Deeplink</span>
               </button>
 
               <button id="startApi" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
-                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">API</span>
+                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">API</span>
                 <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">POST /invitation</h2>
                 <p class="mt-3 text-sm leading-6 text-slate-600">
-                   Creates an invitation and returns its link for the upload flow.
+                   Creates an invitation.
                 </p>
                 <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue with API</span>
               </button>
@@ -95,10 +93,9 @@
 
           <section id="screen-link" data-screen class="hidden space-y-7">
             <div class="space-y-4">
-              <p class="text-sm font-medium uppercase tracking-[0.2em] text-brand">Step 2</p>
+              <p class="text-sm font-medium tracking-[0.2em] text-brand">Step 2</p>
               <div class="flex flex-wrap items-center gap-3">
-                <span id="linkModeBadge" class="inline-flex items-center rounded-full bg-brand/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand"></span>
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+                <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-slate-600">
                   customer_no <span id="linkCustomerNo" class="ml-2 text-slate-950"></span>
                 </span>
               </div>
@@ -115,14 +112,14 @@
                   Scan on another device, or open the link directly.
                 </p>
                 <div id="qrLinkPanel" class="mt-4 hidden rounded-3xl border border-slate-200 bg-white p-4">
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Generated link</p>
+                  <p class="text-xs font-semibold tracking-[0.18em] text-slate-500">Generated link</p>
                   <p id="qrLinkValue" class="mt-2 break-all text-sm leading-6 text-slate-700"></p>
                 </div>
               </div>
 
               <div class="space-y-5 rounded-3xl border border-slate-200 bg-white p-5">
                 <div id="linkValuePanel">
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Generated link</p>
+                  <p class="text-xs font-semibold tracking-[0.18em] text-slate-500">Generated link</p>
                   <p id="linkValue" class="mt-2 break-all text-sm leading-6 text-slate-700"></p>
                 </div>
 
@@ -139,7 +136,7 @@
                 </div>
 
                 <p class="text-sm leading-6 text-slate-500">
-                  The upload opens in a new tab so this screen stays available. If you scanned the QR code elsewhere, use "Check for Photo" after the upload completes.
+                  If you scanned the QR code elsewhere, use "Check for Photo" after the upload completes.
                 </p>
               </div>
             </div>
@@ -148,12 +145,12 @@
           <section id="screen-result" data-screen class="hidden space-y-7">
             <div class="space-y-4">
               <div class="space-y-4">
-                <p class="text-sm font-medium uppercase tracking-[0.2em] text-brand">Step 3</p>
+                <p class="text-sm font-medium tracking-[0.2em] text-brand">Step 3</p>
                 <div class="flex flex-wrap items-center gap-3">
-                  <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+                  <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-slate-600">
                     customer_no <span id="resultCustomerNo" class="ml-2 text-slate-950"></span>
                   </span>
-                  <span id="resultStatusBadge" class="inline-flex items-center rounded-full bg-amber-100 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Waiting</span>
+                  <span id="resultStatusBadge" class="inline-flex items-center rounded-full bg-amber-100 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-amber-700">Waiting</span>
                 </div>
               </div>
               <h2 class="text-3xl font-semibold tracking-[-0.04em] text-slate-950">Fetch the exported photo</h2>
@@ -184,24 +181,24 @@
 
         <aside class="flex flex-col justify-between gap-6">
           <div class="rounded-[2rem] border border-white/70 bg-white/85 p-6 text-slate-900 shadow-soft backdrop-blur-xl sm:p-8">
-            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand">Server-side handling</p>
+            <p class="text-sm font-semibold tracking-[0.2em] text-brand">Server-side handling</p>
             <div class="mt-5 space-y-4 text-sm leading-7 text-slate-700">
-              <p>The Deeplink URL and the API request are sent via the server to keep the Deeplink secret and API-key hidden.</p>
+              <p>The Deeplink URL and the API request are handled by a proxy to keep the Deeplink secret and API-key hidden.</p>
               <p>The server proxy is implemented with Slim PHP micro framewrok.</p>
               <p>Check out the <a href="
-https://github.com/visiblesolutions/photocollect-api-demo">Github repo</a> for the demo app source code.</p>
+https://github.com/visiblesolutions/photocollect-api-demo">Github repo</a> for the source code.</p>
             </div>
           </div>
 
-          <div class="rounded-[2rem] border border-slate-800 bg-slate-900 p-6 text-slate-100 sm:p-8">
-            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">Configured defaults</p>
+          <div class="rounded-[2rem] border border-slate-600 bg-slate-800/95 p-6 text-slate-100 shadow-soft sm:p-8">
+            <p class="text-sm font-semibold tracking-[0.2em] text-blue-200">Configured defaults</p>
             <dl class="mt-5 grid gap-4 text-sm">
-              <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <dt class="text-slate-400">site_code</dt>
+              <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-600 bg-slate-700/50 px-4 py-3">
+                <dt class="text-slate-300">site_code</dt>
                 <dd class="font-semibold text-white">__SITE_CODE__</dd>
               </div>
-              <div class="flex items-start justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <dt class="shrink-0 whitespace-nowrap text-slate-400">API base</dt>
+              <div class="flex items-start justify-between gap-3 rounded-2xl border border-slate-600 bg-slate-700/50 px-4 py-3">
+                <dt class="shrink-0 whitespace-nowrap text-slate-300">API base</dt>
                 <dd class="text-right font-semibold text-white break-all">__API_BASE_URL__</dd>
               </div>
             </dl>
