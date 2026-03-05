@@ -6,7 +6,6 @@ const refreshCustomerNoButton = document.getElementById("refreshCustomerNo");
 const startDeeplinkButton = document.getElementById("startDeeplink");
 const startApiButton = document.getElementById("startApi");
 const logoHomeButton = document.getElementById("logoHome");
-const linkModeBadge = document.getElementById("linkModeBadge");
 const linkCustomerNo = document.getElementById("linkCustomerNo");
 const linkTitle = document.getElementById("linkTitle");
 const linkDescription = document.getElementById("linkDescription");
@@ -182,7 +181,6 @@ function renderQrCode(url) {
 }
 
 function setLinkScreen(copy) {
-  linkModeBadge.textContent = copy.mode;
   linkTitle.textContent = copy.title;
   linkDescription.textContent = copy.description;
   linkValue.textContent = state.linkUrl;
@@ -198,7 +196,7 @@ function setLinkScreen(copy) {
 
 function setResultState(kind, badgeText, bodyText) {
   resultStatusBadge.textContent = badgeText;
-  resultStatusBadge.className = "inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em]";
+  resultStatusBadge.className = "inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold tracking-[0.18em]";
 
   if (kind === "ready") {
     resultStatusBadge.classList.add("bg-emerald-100", "text-emerald-700");
@@ -258,7 +256,7 @@ async function startFlow(flow) {
       setLinkScreen({
         mode: "Deeplink",
         title: "Open the signed deeplink",
-        description: "This deeplink was signed on the demo app backeend with the configured secret. No pending invitation on Photo Collect was created yet.",
+        description: "This deeplink was created on the proxy with the configured secret. A pending invitation on Photo Collect is only created when the link is used.",
         buttonLabel: "Open Link",
         showQrLinkPanel: true
       });
@@ -274,7 +272,7 @@ async function startFlow(flow) {
       setLinkScreen({
         mode: "API",
         title: "Open the invitation link",
-        description: "This link comes from POST /invitation. We now have a pending invitation on Photo Collect.",
+        description: "This link comes from POST /invitation. The process created a pending invitation on Photo Collect.",
         buttonLabel: "Open Link",
         showQrLinkPanel: false
       });
