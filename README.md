@@ -18,6 +18,12 @@ Point your web server document root at the `public/` directory so only browser-f
 
 The Slim front controller is public/index.php, and browser assets stay under public/assets.
 
+
+## Live Demo
+
+Try it here: [Live demo](https://apidemo.photocollect.io).
+
+
 ## API documentation
 
 Refer to the [API documentation](https://apidoc.photocollect.io).
