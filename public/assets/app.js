@@ -37,10 +37,38 @@ const SCREENS = {
   result: screenResult
 };
 
-const SUPPORTED_SITE_CODES = [
-  "api-demo",
-  "api-demo-signature"
-];
+function getConfiguredSiteCodes() {
+  if (!siteCodeSelect) {
+    return [];
+  }
+
+  const configValue = String(siteCodeSelect.dataset.supportedSiteCodes || "").trim();
+  if (configValue === "") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(configValue);
+    if (Array.isArray(parsed)) {
+      const normalized = parsed
+        .map((value) => String(value || "").trim())
+        .filter((value) => value !== "");
+
+      const unique = [...new Set(normalized)];
+      if (unique.length > 0) {
+        return unique;
+      }
+    }
+  } catch (error) {
+    return [];
+  }
+
+  return [];
+}
+
+const SUPPORTED_SITE_CODES = getConfiguredSiteCodes();
+const DEFAULT_SITE_CODE_FROM_TEMPLATE = siteCodeSelect ? String(siteCodeSelect.dataset.defaultSiteCode || "").trim() : "";
+const SITE_CODE_FALLBACK = DEFAULT_SITE_CODE_FROM_TEMPLATE || SUPPORTED_SITE_CODES[0] || "";
 const SITE_CODE_COOKIE_NAME = "photo_collect_site_code";
 const SITE_CODE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
@@ -80,7 +108,7 @@ function persistSiteCode(siteCode) {
 const state = {
   customerNo: "",
   flow: "",
-  siteCode: "api-demo",
+  siteCode: getDefaultSiteCode(),
   linkUrl: "",
   qr: null,
   pollHandle: null,
@@ -124,7 +152,7 @@ function getDefaultSiteCode() {
     return fromCookie;
   }
 
-  return SUPPORTED_SITE_CODES.includes(configured) ? configured : SUPPORTED_SITE_CODES[0];
+  return SUPPORTED_SITE_CODES.includes(configured) ? configured : SITE_CODE_FALLBACK;
 }
 
 function getSelectedSiteCode() {
