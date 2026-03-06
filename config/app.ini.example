@@ -1,5 +1,6 @@
 api_base_url = "https://demo.photocollect.io/apiv1"
 web_base_url = "https://demo.photocollect.io"
-site_code = ""
+supported_site_codes[] = "api-demo"
+supported_site_codes[] = "api-demo-signature"
 api_key = ""
 deeplink_secret = ""
