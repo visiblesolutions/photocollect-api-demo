@@ -23,6 +23,11 @@ if ($missingConfigKeys !== []) {
     throw new RuntimeException('Missing required config key(s) in config/app.ini: ' . implode(', ', $missingConfigKeys));
 }
 
+$availableSiteCodes = [
+    'api-demo' => 'Photo Flow',
+    'api-demo-signature' => 'Photo & Signature Flow',
+];
+
 $basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/.');
 $basePath = $basePath === '/' ? '' : $basePath;
 $baseHref = $basePath === '' ? '/' : $basePath . '/';
@@ -55,6 +60,19 @@ $generateCustomerNo = static function (): string {
     return substr(bin2hex(random_bytes(8)), 0, 16);
 };
 
+$resolveSiteCode = static function (?string $candidate) use ($availableSiteCodes, $config): string {
+    $candidate = trim((string) $candidate);
+    if ($candidate === '') {
+        return (string) $config['site_code'];
+    }
+
+    if (!array_key_exists($candidate, $availableSiteCodes)) {
+        throw new RuntimeException('The requested site_code is not supported by this demo.');
+    }
+
+    return $candidate;
+};
+
 $app->get('/', function (Request $request, Response $response) use ($baseHref, $config): Response {
     $template = file_get_contents(__DIR__ . '/../templates/app.html');
     $baseUrl = (string) $config['web_base_url'];
@@ -78,46 +96,49 @@ $app->get('/', function (Request $request, Response $response) use ($baseHref, $
     return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
 });
 
-$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo): Response {
+$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
     $redirectUri = trim((string) ($data['redirect_uri'] ?? ''));
+    $siteCode = $resolveSiteCode($data['site_code'] ?? null);
 
     if ($customerNo === '') {
         $customerNo = $generateCustomerNo();
     }
 
     try {
-        return $writeJson($response, $client->createDeeplink($customerNo, $redirectUri));
+        return $writeJson($response, $client->createDeeplink($customerNo, $redirectUri, $siteCode));
     } catch (Throwable $exception) {
         return $writeJson($response, ['error' => $exception->getMessage()], 502);
     }
 });
 
-$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo): Response {
+$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
+    $siteCode = $resolveSiteCode($data['site_code'] ?? null);
 
     if ($customerNo === '') {
         $customerNo = $generateCustomerNo();
     }
 
     try {
-        return $writeJson($response, $client->createInvitation($customerNo));
+        return $writeJson($response, $client->createInvitation($customerNo, $siteCode));
     } catch (Throwable $exception) {
         return $writeJson($response, ['error' => $exception->getMessage()], 502);
     }
 });
 
-$app->get('/api/export', function (Request $request, Response $response) use ($client, $writeJson): Response {
+$app->get('/api/export', function (Request $request, Response $response) use ($client, $writeJson, $resolveSiteCode): Response {
     $customerNo = trim((string) ($request->getQueryParams()['customer_no'] ?? ''));
+    $siteCode = $resolveSiteCode($request->getQueryParams()['site_code'] ?? null);
 
     if ($customerNo === '') {
         return $writeJson($response, ['error' => 'The customer_no query parameter is required.'], 400);
     }
 
     try {
-        return $writeJson($response, $client->fetchLatestExport($customerNo));
+        return $writeJson($response, $client->fetchLatestExport($customerNo, $siteCode));
     } catch (Throwable $exception) {
         return $writeJson($response, ['error' => $exception->getMessage()], 502);
     }
