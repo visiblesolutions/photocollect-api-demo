@@ -30,9 +30,10 @@ final class PhotoCollectClient
         ]);
     }
 
-    public function createDeeplink(string $customerNo, ?string $redirectUri = null): array
+    public function createDeeplink(string $customerNo, ?string $redirectUri = null, ?string $siteCode = null): array
     {
         $customerNo = trim($customerNo);
+        $siteCode = $this->resolveSiteCode($siteCode);
 
         if ($customerNo === '') {
             throw new RuntimeException('A customer_no value is required to generate a deeplink.');
@@ -40,7 +41,7 @@ final class PhotoCollectClient
 
         $signedParameters = [
             'customer_no' => $customerNo,
-            'site_code' => $this->siteCode,
+            'site_code' => $siteCode,
         ];
 
         $redirectUri = trim((string) $redirectUri);
@@ -58,16 +59,17 @@ final class PhotoCollectClient
 
         return [
             'customer_no' => $customerNo,
-            'site_code' => $this->siteCode,
+            'site_code' => $siteCode,
             'salt' => $signedParameters['salt'],
             'deeplink_url' => rtrim($this->webBaseUrl, '/') . '/collect/new?' . http_build_query($parameters, '', '&', PHP_QUERY_RFC3986),
             'redirect_uri' => $redirectUri,
         ];
     }
 
-    public function createInvitation(string $customerNo): array
+    public function createInvitation(string $customerNo, ?string $siteCode = null): array
     {
         $customerNo = trim($customerNo);
+        $siteCode = $this->resolveSiteCode($siteCode);
 
         if ($customerNo === '') {
             throw new RuntimeException('A customer_no value is required to create an invitation.');
@@ -78,7 +80,7 @@ final class PhotoCollectClient
             path: '/invitation',
             body: [
                 'customer_no' => $customerNo,
-                'site_code' => $this->siteCode,
+                'site_code' => $siteCode,
                 'locale' => 'en_US',
                 'upload_channel' => 'registration',
             ],
@@ -91,16 +93,17 @@ final class PhotoCollectClient
 
         return [
             'customer_no' => $customerNo,
-            'site_code' => $this->siteCode,
+            'site_code' => $siteCode,
             'invitation_key' => (string) ($response['invitation_key'] ?? ''),
             'invitation_url' => $invitationUrl,
             'raw_response' => $response,
         ];
     }
 
-    public function fetchLatestExport(string $customerNo): array
+    public function fetchLatestExport(string $customerNo, ?string $siteCode = null): array
     {
         $customerNo = trim($customerNo);
+        $siteCode = $this->resolveSiteCode($siteCode);
 
         if ($customerNo === '') {
             throw new RuntimeException('A customer_no value is required to fetch exports.');
@@ -111,7 +114,7 @@ final class PhotoCollectClient
             path: '/export',
             query: [
                 'customer_no' => $customerNo,
-                'site_code' => $this->siteCode,
+                'site_code' => $siteCode,
                 'page_size' => 10,
             ],
         );
@@ -121,7 +124,7 @@ final class PhotoCollectClient
             return [
                 'status' => 'pending',
                 'customer_no' => $customerNo,
-                'site_code' => $this->siteCode,
+                'site_code' => $siteCode,
                 'message' => 'No exported photo is available yet.',
             ];
         }
@@ -138,7 +141,7 @@ final class PhotoCollectClient
             return [
                 'status' => 'pending',
                 'customer_no' => $customerNo,
-                'site_code' => $this->siteCode,
+                'site_code' => $siteCode,
                 'message' => 'The export is listed, but file content is not available yet.',
             ];
         }
@@ -159,7 +162,7 @@ final class PhotoCollectClient
         $payload = [
             'status' => 'ready',
             'customer_no' => $customerNo,
-            'site_code' => $this->siteCode,
+            'site_code' => $siteCode,
             'image_url' => sprintf('data:%s;base64,%s', $mimeType, $file['file_content']),
             'file' => $file,
         ];
@@ -173,6 +176,13 @@ final class PhotoCollectClient
         }
 
         return $payload;
+    }
+
+    private function resolveSiteCode(?string $siteCode): string
+    {
+        $siteCode = trim((string) $siteCode);
+
+        return $siteCode === '' ? $this->siteCode : $siteCode;
     }
 
     private function deleteExport(string $invitationKey): array
