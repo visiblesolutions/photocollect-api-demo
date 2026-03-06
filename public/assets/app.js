@@ -27,6 +27,7 @@ const resultImage = document.getElementById("resultImage");
 const resultSignaturePanel = document.getElementById("resultSignaturePanel");
 const resultSignatureImage = document.getElementById("resultSignatureImage");
 const resultMeta = document.getElementById("resultMeta");
+const parameterSiteCode = document.getElementById("parameterSiteCode");
 const retryFetchButton = document.getElementById("retryFetch");
 const closeResultButtons = document.querySelectorAll("[data-close-result]");
 
@@ -40,6 +41,41 @@ const SUPPORTED_SITE_CODES = [
   "api-demo",
   "api-demo-signature"
 ];
+const SITE_CODE_COOKIE_NAME = "photo_collect_site_code";
+const SITE_CODE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+
+function readCookie(name) {
+  const prefix = `${encodeURIComponent(name)}=`;
+  const cookie = document.cookie
+    .split(";")
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(prefix));
+
+  if (!cookie) {
+    return null;
+  }
+
+  return decodeURIComponent(cookie.substring(prefix.length));
+}
+
+function writeCookie(name, value, maxAgeSeconds) {
+  const safeValue = encodeURIComponent(value);
+  const attributes = [
+    `max-age=${maxAgeSeconds}`,
+    "path=/",
+    "SameSite=Lax"
+  ];
+
+  document.cookie = `${encodeURIComponent(name)}=${safeValue}; ${attributes.join("; ")}`;
+}
+
+function persistSiteCode(siteCode) {
+  if (!SUPPORTED_SITE_CODES.includes(siteCode)) {
+    return;
+  }
+
+  writeCookie(SITE_CODE_COOKIE_NAME, siteCode, SITE_CODE_COOKIE_MAX_AGE_SECONDS);
+}
 
 const state = {
   customerNo: "",
@@ -82,6 +118,11 @@ function appBaseUrl() {
 
 function getDefaultSiteCode() {
   const configured = siteCodeSelect ? String(siteCodeSelect.dataset.defaultSiteCode || "").trim() : "";
+  const fromCookie = readCookie(SITE_CODE_COOKIE_NAME);
+
+  if (fromCookie && SUPPORTED_SITE_CODES.includes(fromCookie)) {
+    return fromCookie;
+  }
 
   return SUPPORTED_SITE_CODES.includes(configured) ? configured : SUPPORTED_SITE_CODES[0];
 }
@@ -133,11 +174,22 @@ function syncCustomerNo() {
 }
 
 function syncSiteCode() {
-  if (siteCodeSelect) {
-    siteCodeSelect.value = getSelectedSiteCode();
+  const selected = getSelectedSiteCode();
+  const hasValidStateSiteCode = SUPPORTED_SITE_CODES.includes(state.siteCode);
+
+  if (!hasValidStateSiteCode) {
+    state.siteCode = selected;
   }
 
-  state.siteCode = getSelectedSiteCode();
+  if (siteCodeSelect) {
+    siteCodeSelect.value = state.siteCode;
+  }
+
+  if (parameterSiteCode) {
+    parameterSiteCode.textContent = state.siteCode;
+  }
+
+  persistSiteCode(state.siteCode);
 }
 
 function resetGeneratedState() {
@@ -453,6 +505,7 @@ refreshCustomerNoButton.addEventListener("click", () => {
 if (siteCodeSelect) {
   siteCodeSelect.addEventListener("change", () => {
     state.siteCode = getSelectedSiteCode();
+    syncSiteCode();
   });
 }
 
