@@ -41,7 +41,7 @@
             </button>
           </div>
 
-          <section id="screen-start" data-screen class="space-y-8">
+        <section id="screen-start" data-screen class="space-y-8">
             <div class="space-y-5">
               <h1 class="max-w-2xl text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl">
                 Integration Demo
@@ -61,13 +61,27 @@
             </div>
 
             <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center justify-between gap-3">
                 <p id="customerNoBadge" class="text-2xl font-semibold tracking-[-0.03em] text-slate-950"></p>
-                <button id="refreshCustomerNo" type="button" class="btn-secondary inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition">
-                  Regenerate
+                <button id="refreshCustomerNo" type="button" class="btn-secondary inline-flex h-9 w-9 items-center justify-center rounded-full transition" aria-label="Regenerate customer number" title="Regenerate customer number">
+                  <span class="sr-only">Regenerate</span>
+                  <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4.9 4.9A8.5 8.5 0 0 1 12 3c4.97 0 9 4.03 9 9"/>
+                    <path d="M4 9V4h5"/>
+                    <path d="M19.1 19.1A8.5 8.5 0 0 1 12 21a9 9 0 0 1-7-15"/>
+                    <path d="M20 15v5h-5"/>
+                  </svg>
                 </button>
               </div>
               <p class="mt-2 text-sm leading-6 text-slate-600">This auto-generated identifier would be an employee number, citizen id or process id.</p>
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 bg-white p-5">
+              <label for="siteCodeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">site_code</label>
+              <select id="siteCodeSelect" data-default-site-code="__SITE_CODE__" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
+                <option value="api-demo">Photo Flow</option>
+                <option value="api-demo-signature">Photo &amp; Signature Flow</option>
+              </select>
             </div>
 
             <div class="grid gap-4 lg:grid-cols-2">
@@ -163,7 +177,16 @@
               <div id="resultPlaceholder" class="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/90 p-8 text-center text-sm leading-6 text-slate-500">
                 Waiting for the exported image...
               </div>
-              <img id="resultImage" alt="Exported Photo" class="hidden w-full rounded-3xl border border-slate-200 object-contain shadow-sm">
+              <div id="resultGallery" class="hidden grid gap-4 lg:grid-cols-2">
+                <div class="rounded-3xl border border-slate-200 bg-white p-3">
+                  <p class="mb-2 text-xs font-semibold tracking-[0.18em] text-slate-500">Exported Photo</p>
+                  <img id="resultImage" alt="Exported Photo" class="hidden w-full rounded-2xl border border-slate-200 object-contain shadow-sm">
+                </div>
+                <div id="resultSignaturePanel" class="hidden rounded-3xl border border-slate-200 bg-white p-3">
+                  <p class="mb-2 text-xs font-semibold tracking-[0.18em] text-slate-500">Signature</p>
+                  <img id="resultSignatureImage" alt="Signature" class="w-full rounded-2xl border border-slate-200 object-contain shadow-sm">
+                </div>
+              </div>
 
               <div id="resultMeta" class="hidden rounded-3xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600"></div>
 
