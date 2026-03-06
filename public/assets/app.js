@@ -3,6 +3,7 @@ const screenLink = document.getElementById("screen-link");
 const screenResult = document.getElementById("screen-result");
 const customerNoBadge = document.getElementById("customerNoBadge");
 const refreshCustomerNoButton = document.getElementById("refreshCustomerNo");
+const siteCodeSelect = document.getElementById("siteCodeSelect");
 const startDeeplinkButton = document.getElementById("startDeeplink");
 const startApiButton = document.getElementById("startApi");
 const logoHomeButton = document.getElementById("logoHome");
@@ -21,7 +22,10 @@ const resultCustomerNo = document.getElementById("resultCustomerNo");
 const resultStatusBadge = document.getElementById("resultStatusBadge");
 const resultStatusText = document.getElementById("resultStatusText");
 const resultPlaceholder = document.getElementById("resultPlaceholder");
+const resultGallery = document.getElementById("resultGallery");
 const resultImage = document.getElementById("resultImage");
+const resultSignaturePanel = document.getElementById("resultSignaturePanel");
+const resultSignatureImage = document.getElementById("resultSignatureImage");
 const resultMeta = document.getElementById("resultMeta");
 const retryFetchButton = document.getElementById("retryFetch");
 const closeResultButtons = document.querySelectorAll("[data-close-result]");
@@ -32,9 +36,15 @@ const SCREENS = {
   result: screenResult
 };
 
+const SUPPORTED_SITE_CODES = [
+  "api-demo",
+  "api-demo-signature"
+];
+
 const state = {
   customerNo: "",
   flow: "",
+  siteCode: "api-demo",
   linkUrl: "",
   qr: null,
   pollHandle: null,
@@ -70,12 +80,28 @@ function appBaseUrl() {
   return new URL(document.baseURI);
 }
 
+function getDefaultSiteCode() {
+  const configured = siteCodeSelect ? String(siteCodeSelect.dataset.defaultSiteCode || "").trim() : "";
+
+  return SUPPORTED_SITE_CODES.includes(configured) ? configured : SUPPORTED_SITE_CODES[0];
+}
+
+function getSelectedSiteCode() {
+  if (!siteCodeSelect) {
+    return state.siteCode || getDefaultSiteCode();
+  }
+
+  const selected = String(siteCodeSelect.value || "").trim();
+  return SUPPORTED_SITE_CODES.includes(selected) ? selected : getDefaultSiteCode();
+}
+
 function buildRedirectUrl() {
   const url = appBaseUrl();
   url.search = "";
   url.hash = "";
   url.searchParams.set("screen", "result");
   url.searchParams.set("customer_no", state.customerNo);
+  url.searchParams.set("site_code", state.siteCode);
   if (state.flow) {
     url.searchParams.set("flow", state.flow);
   }
@@ -106,6 +132,14 @@ function syncCustomerNo() {
   resultCustomerNo.textContent = state.customerNo;
 }
 
+function syncSiteCode() {
+  if (siteCodeSelect) {
+    siteCodeSelect.value = getSelectedSiteCode();
+  }
+
+  state.siteCode = getSelectedSiteCode();
+}
+
 function resetGeneratedState() {
   clearPolling();
   state.flow = "";
@@ -118,8 +152,11 @@ function resetGeneratedState() {
   linkValuePanel.classList.remove("hidden");
   linkValue.textContent = "";
   qrLinkValue.textContent = "";
+  resultGallery.classList.add("hidden");
   resultImage.src = "";
   resultImage.classList.add("hidden");
+  resultSignatureImage.src = "";
+  resultSignaturePanel.classList.add("hidden");
   resultMeta.innerHTML = "";
   resultMeta.classList.add("hidden");
   retryFetchButton.classList.add("hidden");
@@ -135,12 +172,16 @@ function resetToStart(pushHistory = true) {
   showScreen("start");
 
   if (pushHistory) {
-    window.history.replaceState({}, "", appBaseUrl().pathname);
+    const redirectUrl = appBaseUrl();
+    redirectUrl.pathname = appBaseUrl().pathname;
+    redirectUrl.search = "";
+    redirectUrl.hash = "";
+    window.history.replaceState({}, "", redirectUrl.toString());
   }
 }
 
 function setLoadingButtons(isLoading) {
-  [startDeeplinkButton, startApiButton, refreshCustomerNoButton].forEach((button) => {
+  [startDeeplinkButton, startApiButton, refreshCustomerNoButton, siteCodeSelect].forEach((button) => {
     if (!button) {
       return;
     }
@@ -238,6 +279,7 @@ async function requestJson(path, options = {}) {
 
 async function startFlow(flow) {
   state.flow = flow;
+  state.siteCode = getSelectedSiteCode();
   syncCustomerNo();
   setLoadingButtons(true);
 
@@ -248,6 +290,7 @@ async function startFlow(flow) {
         method: "POST",
         body: JSON.stringify({
           customer_no: state.customerNo,
+          site_code: state.siteCode,
           redirect_uri: buildRedirectUrl()
         })
       });
@@ -264,7 +307,8 @@ async function startFlow(flow) {
       payload = await requestJson("api/invitation", {
         method: "POST",
         body: JSON.stringify({
-          customer_no: state.customerNo
+          customer_no: state.customerNo,
+          site_code: state.siteCode
         })
       });
 
@@ -286,15 +330,36 @@ async function startFlow(flow) {
 }
 
 function renderResult(file) {
-  resultImage.src = file.image_url;
+  const exportFile = typeof file.file === "object" && file.file !== null ? file.file : {};
+  const signatureContent = typeof exportFile.signature_content === "string" ? exportFile.signature_content.trim() : "";
+  const hasSignature = state.siteCode === "api-demo-signature" && signatureContent !== "";
+  const signatureSource = signatureContent.startsWith("data:")
+    ? signatureContent
+    : `data:image/png;base64,${signatureContent}`;
+
+  resultGallery.classList.remove("hidden");
+  resultImage.src = file.image_url || "";
   resultImage.classList.remove("hidden");
   resultPlaceholder.classList.add("hidden");
+
+  if (hasSignature) {
+    resultSignaturePanel.classList.remove("hidden");
+    resultSignatureImage.classList.remove("hidden");
+    resultSignatureImage.src = signatureSource;
+  } else {
+    resultSignaturePanel.classList.add("hidden");
+    resultSignatureImage.src = "";
+    resultSignatureImage.classList.add("hidden");
+  }
+
   resultMeta.classList.remove("hidden");
   resultMeta.innerHTML = [
-    `<div><strong>File:</strong> ${escapeHtml(file.file.file_name || "n/a")}</div>`,
-    `<div><strong>Uploaded:</strong> ${escapeHtml(file.file.uploaded_at || "n/a")}</div>`,
-    `<div><strong>Exported:</strong> ${escapeHtml(file.file.exported_at || "n/a")}</div>`,
-    `<div><strong>Invitation:</strong> ${escapeHtml(file.file.invitation_key || "n/a")}</div>`
+    `<div><strong>site_code:</strong> ${escapeHtml(file.site_code || state.siteCode || "n/a")}</div>`,
+    `<div><strong>File:</strong> ${escapeHtml(exportFile.file_name || "n/a")}</div>`,
+    `<div><strong>Uploaded:</strong> ${escapeHtml(exportFile.uploaded_at || "n/a")}</div>`,
+    `<div><strong>Exported:</strong> ${escapeHtml(exportFile.exported_at || "n/a")}</div>`,
+    `<div><strong>Invitation:</strong> ${escapeHtml(exportFile.invitation_key || "n/a")}</div>`,
+    `<div><strong>Signature:</strong> ${escapeHtml(hasSignature ? "Included" : state.siteCode === "api-demo-signature" ? "Not present yet" : "Not requested")}</div>`
   ].join("");
   retryFetchButton.classList.add("hidden");
   setResultState("ready", "Ready", "The latest export for this customer_no is shown below.");
@@ -306,7 +371,10 @@ async function pollForPhoto() {
   retryFetchButton.classList.add("hidden");
 
   try {
-    const payload = await requestJson(`api/export?customer_no=${encodeURIComponent(state.customerNo)}`);
+    const exportParams = new URLSearchParams();
+    exportParams.set("customer_no", state.customerNo);
+    exportParams.set("site_code", state.siteCode);
+    const payload = await requestJson(`api/export?${exportParams.toString()}`);
 
     if (payload.status === "ready") {
       renderResult(payload);
@@ -336,7 +404,12 @@ function openResultScreen() {
   clearPolling();
   state.pollAttempts = 0;
   window.history.replaceState({}, "", buildRedirectUrl());
+  resultGallery.classList.add("hidden");
   resultImage.classList.add("hidden");
+  resultImage.src = "";
+  resultSignaturePanel.classList.add("hidden");
+  resultSignatureImage.src = "";
+  resultSignatureImage.classList.add("hidden");
   resultMeta.classList.add("hidden");
   resultMeta.innerHTML = "";
   resultPlaceholder.classList.remove("hidden");
@@ -351,6 +424,7 @@ function bootstrapFromUrl() {
   const customerNo = params.get("customer_no");
   const requestedScreen = params.get("screen");
   const flow = params.get("flow");
+  const siteCode = params.get("site_code");
 
   if (customerNo) {
     state.customerNo = customerNo;
@@ -358,6 +432,8 @@ function bootstrapFromUrl() {
     state.customerNo = generateCustomerNo();
   }
 
+  state.siteCode = (siteCode && SUPPORTED_SITE_CODES.includes(siteCode)) ? siteCode : getDefaultSiteCode();
+  syncSiteCode();
   state.flow = flow || "";
   syncCustomerNo();
 
@@ -373,6 +449,12 @@ refreshCustomerNoButton.addEventListener("click", () => {
   state.customerNo = generateCustomerNo();
   syncCustomerNo();
 });
+
+if (siteCodeSelect) {
+  siteCodeSelect.addEventListener("change", () => {
+    state.siteCode = getSelectedSiteCode();
+  });
+}
 
 startDeeplinkButton.addEventListener("click", () => {
   startFlow("deeplink");
