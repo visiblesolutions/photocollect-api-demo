@@ -40,9 +40,10 @@ const resultSignatureImage = document.getElementById("resultSignatureImage");
 const resultMeta = document.getElementById("resultMeta");
 const retryFetchButton = document.getElementById("retryFetch");
 const closeResultButtons = document.querySelectorAll("[data-close-result]");
-const IFRAME_RESIZE_MESSAGE_TYPE = "photo-collect-demo:parent-resize";
-let iframeResizeFrame = 0;
-let iframeResizeObserver = null;
+const IFRAME_CONTENT_RESIZE_MESSAGE_TYPE = "photo-collect:content-resize";
+const IFRAME_MIN_HEIGHT = 720;
+let iframeHeightFrame = 0;
+let lastIframeHeight = 0;
 
 const SCREENS = {
   start: screenStart,
@@ -303,6 +304,10 @@ function resetGeneratedState() {
   if (checkPhotoNowIframeButton) {
     checkPhotoNowIframeButton.classList.add("hidden");
   }
+  if (linkIframe) {
+    linkIframe.style.height = "";
+  }
+  lastIframeHeight = 0;
   linkIframe.src = "about:blank";
   linkValue.textContent = "";
   qrLinkValue.textContent = "";
@@ -399,37 +404,93 @@ function applyProcessStepStatus(step) {
   }
 }
 
-function postIframeResizeMessage() {
-  if (!linkIframe || linkIframePanel.classList.contains("hidden") || !linkIframe.contentWindow) {
-    return;
+function clearIframeHeightFrame() {
+  if (iframeHeightFrame !== 0) {
+    window.cancelAnimationFrame(iframeHeightFrame);
+    iframeHeightFrame = 0;
   }
-
-  const iframeBounds = linkIframe.getBoundingClientRect();
-  if (iframeBounds.width <= 0 || iframeBounds.height <= 0) {
-    return;
-  }
-
-  linkIframe.contentWindow.postMessage({
-    type: IFRAME_RESIZE_MESSAGE_TYPE,
-    viewport: {
-      width: window.innerWidth,
-      height: window.innerHeight
-    },
-    iframe: {
-      width: Math.round(iframeBounds.width),
-      height: Math.round(iframeBounds.height)
-    }
-  }, "*");
 }
 
-function scheduleIframeResizeMessage() {
-  if (iframeResizeFrame !== 0) {
+function applyIframeHeight(height) {
+  if (!linkIframe) {
     return;
   }
 
-  iframeResizeFrame = window.requestAnimationFrame(() => {
-    iframeResizeFrame = 0;
-    postIframeResizeMessage();
+  const safeHeight = Number(height);
+  if (!Number.isFinite(safeHeight) || safeHeight <= 0) {
+    return;
+  }
+
+  const roundedHeight = Math.max(Math.round(safeHeight), IFRAME_MIN_HEIGHT);
+  if (roundedHeight === lastIframeHeight) {
+    return;
+  }
+
+  lastIframeHeight = roundedHeight;
+  linkIframe.style.height = `${roundedHeight}px`;
+}
+
+function getIframeContentHeightFromPayload(data = null) {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const candidates = [
+    data.value,
+    data.height,
+    data?.iframe?.height,
+    data?.iframe?.heightPx,
+    data?.payload?.height,
+    data?.payload?.heightPx,
+    data.contentHeight,
+    data.documentHeight,
+    data.bodyHeight,
+    data.iframeHeight,
+    data.iframe_height,
+    data.body_height
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.max(1, Math.round(parsed));
+    }
+  }
+
+  return null;
+}
+
+function measureIframeContentHeightFromDocument() {
+  if (!linkIframe || !linkIframe.contentWindow || !linkIframe.contentDocument || linkIframePanel.classList.contains("hidden")) {
+    return null;
+  }
+
+  try {
+    const doc = linkIframe.contentDocument;
+    const body = doc.body || null;
+    const heights = [
+      doc.documentElement ? doc.documentElement.scrollHeight : 0,
+      doc.documentElement ? doc.documentElement.offsetHeight : 0,
+      body ? body.scrollHeight : 0,
+      body ? body.offsetHeight : 0,
+      body ? body.getBoundingClientRect().height : 0
+    ].map((value) => (Number.isFinite(value) ? Number(value) : 0));
+
+    const measuredHeight = Math.max(...heights);
+    return measuredHeight > 0 ? Math.max(1, Math.round(measuredHeight)) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function scheduleIframeContentHeightMeasure() {
+  clearIframeHeightFrame();
+  iframeHeightFrame = window.requestAnimationFrame(() => {
+    iframeHeightFrame = 0;
+    const contentHeight = measureIframeContentHeightFromDocument();
+    if (contentHeight !== null) {
+      applyIframeHeight(contentHeight);
+    }
   });
 }
 
@@ -439,16 +500,16 @@ function initializeIframeResizePropagation() {
   }
 
   linkIframe.addEventListener("load", () => {
-    scheduleIframeResizeMessage();
+    scheduleIframeContentHeightMeasure();
   });
 
   window.addEventListener("resize", () => {
-    scheduleIframeResizeMessage();
+    scheduleIframeContentHeightMeasure();
   });
 
   if ("ResizeObserver" in window) {
-    iframeResizeObserver = new window.ResizeObserver(() => {
-      scheduleIframeResizeMessage();
+    const iframeResizeObserver = new window.ResizeObserver(() => {
+      scheduleIframeContentHeightMeasure();
     });
     iframeResizeObserver.observe(linkIframe);
     iframeResizeObserver.observe(linkIframePanel);
@@ -490,6 +551,12 @@ function setLinkScreen(copy) {
   qrLinkPanel.classList.toggle("hidden", !showQrLinkPanel);
   linkValuePanel.classList.toggle("hidden", hideLinkValuePanel);
   linkIframePanel.classList.toggle("hidden", !showIframe);
+  if (!showIframe) {
+    linkIframe.style.height = "";
+    lastIframeHeight = 0;
+  } else {
+    applyIframeHeight(IFRAME_MIN_HEIGHT);
+  }
   linkIframe.src = showIframe ? state.linkUrl : "about:blank";
   openLinkButton.classList.toggle("hidden", !showOpenButton);
   checkPhotoNowButton.classList.toggle("hidden", !showCheckPhotoNow);
@@ -512,12 +579,10 @@ function setLinkScreen(copy) {
   linkProcessStepPanel.classList.toggle("hidden", !showIframe);
   if (showIframe) {
     applyProcessStepStatus(state.processStep || "pending");
+    scheduleIframeContentHeightMeasure();
   }
   if (showSidebar) {
     renderQrCode(state.linkUrl);
-  }
-  if (showIframe) {
-    scheduleIframeResizeMessage();
   }
   showScreen("link");
 }
@@ -823,7 +888,7 @@ startFlow("api");
 });
 
 window.addEventListener("message", (event) => {
-  if (!event.data || typeof event.data !== "object" || event.data.type !== "photoCollectProcessStep") {
+  if (!event.data || typeof event.data !== "object") {
     return;
   }
 
@@ -831,7 +896,23 @@ window.addEventListener("message", (event) => {
     return;
   }
 
-  applyProcessStepStatus(event.data.value);
+  if (event.data.type === "photo-collect:process-step") {
+    applyProcessStepStatus(event.data.value);
+    return;
+  }
+
+  const shouldResize = (
+    event.data.type === IFRAME_CONTENT_RESIZE_MESSAGE_TYPE
+  );
+
+  if (!shouldResize) {
+    return;
+  }
+
+  const messageHeight = getIframeContentHeightFromPayload(event.data);
+  if (messageHeight !== null) {
+    applyIframeHeight(messageHeight);
+  }
 });
 
 checkPhotoNowButton.addEventListener("click", () => {
