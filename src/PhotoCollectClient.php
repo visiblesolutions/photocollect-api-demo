@@ -30,10 +30,14 @@ final class PhotoCollectClient
         ]);
     }
 
-    public function createDeeplink(string $customerNo, ?string $redirectUri = null, ?string $siteCode = null): array
+    public function createDeeplink(string $customerNo, ?string $redirectUri = null, ?string $siteCode = null, ?string $locale = null): array
     {
         $customerNo = trim($customerNo);
         $siteCode = $this->resolveSiteCode($siteCode);
+        $locale = trim((string) $locale);
+        if ($locale === '') {
+            $locale = 'en_US';
+        }
 
         if ($customerNo === '') {
             throw new RuntimeException('A customer_no value is required to generate a deeplink.');
@@ -56,6 +60,7 @@ final class PhotoCollectClient
 
         $parameters = $signedParameters;
         $parameters['sig'] = $signature;
+        $parameters['locale'] = $locale;
 
         return [
             'customer_no' => $customerNo,
@@ -66,10 +71,14 @@ final class PhotoCollectClient
         ];
     }
 
-    public function createInvitation(string $customerNo, ?string $siteCode = null): array
+    public function createInvitation(string $customerNo, ?string $siteCode = null, ?string $locale = null): array
     {
         $customerNo = trim($customerNo);
         $siteCode = $this->resolveSiteCode($siteCode);
+        $locale = trim((string) $locale);
+        if ($locale === '') {
+            $locale = 'en_US';
+        }
 
         if ($customerNo === '') {
             throw new RuntimeException('A customer_no value is required to create an invitation.');
@@ -81,7 +90,7 @@ final class PhotoCollectClient
             body: [
                 'customer_no' => $customerNo,
                 'site_code' => $siteCode,
-                'locale' => 'en_US',
+                'locale' => $locale,
                 'upload_channel' => 'registration',
             ],
         );
