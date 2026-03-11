@@ -32,9 +32,9 @@
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
 
-    <main class="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
-      <div class="grid w-full gap-8 lg:grid-cols-[1.35fr_0.65fr]">
-        <section class="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-soft backdrop-blur-xl sm:p-8">
+    <div class="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-10 sm:px-6 lg:px-8">
+      <main class="flex flex-1 items-center">
+        <section class="w-full rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-soft backdrop-blur-xl sm:p-8">
           <div class="mb-8 flex flex-wrap items-center gap-3">
             <button id="logoHome" type="button" class="inline-flex items-center rounded-xl border-0 bg-transparent p-0 appearance-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50" aria-label="Back to start">
               <img src="assets/logo.svg" alt="Photo Collect" class="h-8 w-auto sm:h-10">
@@ -47,17 +47,8 @@
                 Integration Demo
               </h1>
               <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Photo Collect can be integrated into any IT infrastructure for uploading, processing and returning ID photos. There are two options:
+                  Photo Collect can be integrated into any IT infrastructure for uploading, processing and returning ID photos.
               </p>
-                <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                    <strong>Deeplink:</strong> Generate a parametrized upload link without an API call.
-                </p>
-                <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                    <strong>API:</strong> Creates an upload link, Photo Collect tracks pending requests.
-                </p>
-                <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                    After a photo is uploaded, the flow returns to this demo to fetch and display the exported photo.
-                </p>
             </div>
 
             <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
@@ -81,16 +72,32 @@
               <select id="siteCodeSelect" data-default-site-code="__SITE_CODE__" data-supported-site-codes="__SUPPORTED_SITE_CODES__" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
                 __SITE_CODE_OPTIONS__
               </select>
+              <div class="mt-4">
+                <label for="localeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">locale</label>
+              <select id="localeSelect" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20" data-default-locale="en_US">
+                <option value="en_US" selected>en_US</option>
+                <option value="de_DE">de_DE</option>
+              </select>
+              </div>
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-2">
+            <div class="grid gap-4 lg:grid-cols-3">
               <button id="startDeeplink" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
                 <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">Deeplink</span>
                 <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Signed URL</h2>
                 <p class="mt-3 text-sm leading-6 text-slate-600">
                    Creates a Deeplink URL.
                 </p>
-                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue with Deeplink</span>
+                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue</span>
+              </button>
+
+              <button id="startDeeplinkIframe" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
+                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">iFrame</span>
+                <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Embedded Flow</h2>
+                <p class="mt-3 text-sm leading-6 text-slate-600">
+                   Deeplink inside an iFrame.
+                </p>
+                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue</span>
               </button>
 
               <button id="startApi" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
@@ -99,7 +106,7 @@
                 <p class="mt-3 text-sm leading-6 text-slate-600">
                    Creates an invitation.
                 </p>
-                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue with API</span>
+                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue</span>
               </button>
             </div>
           </section>
@@ -116,13 +123,13 @@
               <p id="linkDescription" class="max-w-2xl text-base leading-7 text-slate-600"></p>
             </div>
 
-            <div class="grid gap-6 lg:grid-cols-[300px_1fr]">
-              <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div id="linkScreenGrid" class="grid gap-6 lg:grid-cols-[300px_1fr]">
+              <div id="linkSidebarPanel" class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
                 <div class="mx-auto flex h-[240px] w-[240px] items-center justify-center rounded-3xl bg-white p-4 shadow-sm">
                   <canvas id="qrCanvas" width="240" height="240"></canvas>
                 </div>
                 <p class="mt-4 text-center text-xs leading-5 text-slate-500">
-                  Scan on another device, or open the link directly.
+                  Scan on another device, or use the generated link in the selected flow.
                 </p>
                 <div id="qrLinkPanel" class="mt-4 hidden rounded-3xl border border-slate-200 bg-white p-4">
                   <p class="text-xs font-semibold tracking-[0.18em] text-slate-500">Generated link</p>
@@ -130,27 +137,37 @@
                 </div>
               </div>
 
-              <div class="space-y-5 rounded-3xl border border-slate-200 bg-white p-5">
+              <div id="linkMainPanel" class="space-y-5 rounded-3xl border border-slate-200 bg-white p-5">
                 <div id="linkValuePanel">
                   <p class="text-xs font-semibold tracking-[0.18em] text-slate-500">Generated link</p>
                   <p id="linkValue" class="mt-2 break-all text-sm leading-6 text-slate-700"></p>
                 </div>
 
-                <div class="flex flex-wrap gap-3">
+                  <div id="linkIframePanel" class="hidden space-y-4">
+                    <div id="linkProcessStepPanel" class="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+                      <p class="text-xs font-semibold tracking-[0.18em]">
+                        Process step: <span id="linkProcessStepValue" class="font-semibold">—</span>
+                      </p>
+                    </div>
+                    <button id="checkPhotoNowIframe" type="button" class="hidden btn-secondary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
+                      Check for Photo
+                    </button>
+                    <iframe id="linkIframe" title="Photo Collect embedded deeplink" src="about:blank" class="link-iframe block w-full rounded-3xl border border-slate-200 bg-white"></iframe>
+                  </div>
+
+                <div id="linkActionRow" class="flex flex-wrap gap-3">
                   <a id="openLinkButton" href="#" class="btn-primary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
                     Open Link
                   </a>
                   <button id="checkPhotoNow" type="button" class="btn-secondary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
                     Check for Photo
                   </button>
-                  <button id="backToStart" type="button" class="btn-secondary inline-flex items-center rounded-full px-5 py-3 text-sm font-medium transition">
-                    Start over
-                  </button>
                 </div>
 
-                <p class="text-sm leading-6 text-slate-500">
-                  If you scanned the QR code elsewhere, use "Check for Photo" after the upload completes.
+                <p id="linkUploadHint" class="text-sm leading-6 text-slate-500">
+                  Use "Check for Photo" after the upload completes.
                 </p>
+
               </div>
             </div>
           </section>
@@ -200,34 +217,19 @@
             </div>
           </section>
         </section>
+      </main>
 
-        <aside class="flex flex-col justify-between gap-6">
-          <div class="rounded-[2rem] border border-white/70 bg-white/85 p-6 text-slate-900 shadow-soft backdrop-blur-xl sm:p-8">
-            <p class="text-sm font-semibold tracking-[0.2em] text-brand">Server-side handling</p>
-            <div class="mt-5 space-y-4 text-sm leading-7 text-slate-700">
-              <p>The Deeplink URL and the API request are handled by a proxy to keep the Deeplink secret and API-key hidden.</p>
-              <p>The server proxy is implemented with Slim PHP micro framewrok.</p>
-              <p>Check out the <a href="
-https://github.com/visiblesolutions/photocollect-api-demo">Github repo</a> for the source code.</p>
-            </div>
-          </div>
-
-          <div class="rounded-[2rem] border border-slate-600 bg-slate-800/95 p-6 text-slate-100 shadow-soft sm:p-8">
-              <p class="text-sm font-semibold tracking-[0.2em] text-blue-200">Parameters</p>
-            <dl class="mt-5 grid gap-4 text-sm">
-              <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-600 bg-slate-700/50 px-4 py-3">
-                <dt class="text-slate-300">site_code</dt>
-                <dd id="parameterSiteCode" class="font-semibold text-white">__SITE_CODE__</dd>
-              </div>
-              <div class="flex items-start justify-between gap-3 rounded-2xl border border-slate-600 bg-slate-700/50 px-4 py-3">
-                <dt class="shrink-0 whitespace-nowrap text-slate-300">API base</dt>
-                <dd class="text-right font-semibold text-white break-all">__API_BASE_URL__</dd>
-              </div>
-            </dl>
-          </div>
-        </aside>
-      </div>
-    </main>
+      <footer class="mt-8 text-center text-sm text-slate-700">
+        <a
+          href="https://github.com/visiblesolutions/photocollect-api-demo"
+          target="_blank"
+          rel="noreferrer"
+          class="font-semibold text-brand underline decoration-brand/50 underline-offset-4 transition hover:text-slate-900 hover:decoration-slate-900"
+        >
+          GitHub repo
+        </a>
+      </footer>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
