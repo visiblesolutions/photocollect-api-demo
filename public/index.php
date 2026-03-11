@@ -67,6 +67,17 @@ $resolveSiteCode = static function (?string $candidate) use ($availableSiteCodes
     return $defaultSiteCode;
 };
 
+$supportedLocales = ['en_US', 'de_DE'];
+$defaultLocale = 'en_US';
+$resolveLocale = static function (?string $candidate) use ($supportedLocales, $defaultLocale): string {
+    $candidate = trim((string) $candidate);
+    if (in_array($candidate, $supportedLocales, true)) {
+        return $candidate;
+    }
+
+    return $defaultLocale;
+};
+
 $basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/.');
 $basePath = $basePath === '/' ? '' : $basePath;
 $baseHref = $basePath === '' ? '/' : $basePath . '/';
@@ -128,34 +139,36 @@ $app->get('/', function (Request $request, Response $response) use ($baseHref, $
     return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
 });
 
-$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode): Response {
+$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode, $resolveLocale): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
     $redirectUri = trim((string) ($data['redirect_uri'] ?? ''));
     $siteCode = $resolveSiteCode($data['site_code'] ?? null);
+    $locale = $resolveLocale($data['locale'] ?? null);
 
     if ($customerNo === '') {
         $customerNo = $generateCustomerNo();
     }
 
     try {
-        return $writeJson($response, $client->createDeeplink($customerNo, $redirectUri, $siteCode));
+        return $writeJson($response, $client->createDeeplink($customerNo, $redirectUri, $siteCode, $locale));
     } catch (Throwable $exception) {
         return $writeJson($response, ['error' => $exception->getMessage()], 502);
     }
 });
 
-$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode): Response {
+$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode, $resolveLocale): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
     $siteCode = $resolveSiteCode($data['site_code'] ?? null);
+    $locale = $resolveLocale($data['locale'] ?? null);
 
     if ($customerNo === '') {
         $customerNo = $generateCustomerNo();
     }
 
     try {
-        return $writeJson($response, $client->createInvitation($customerNo, $siteCode));
+        return $writeJson($response, $client->createInvitation($customerNo, $siteCode, $locale));
     } catch (Throwable $exception) {
         return $writeJson($response, ['error' => $exception->getMessage()], 502);
     }
