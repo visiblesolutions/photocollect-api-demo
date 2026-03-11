@@ -38,7 +38,7 @@
             <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <div class="flex items-center justify-between gap-3">
                 <p id="customerNoBadge" class="text-2xl font-semibold tracking-[-0.03em] text-slate-950"></p>
-                <button id="refreshCustomerNo" type="button" class="btn-secondary inline-flex h-9 w-9 items-center justify-center rounded-full transition" aria-label="Regenerate customer number" title="Regenerate customer number">
+                <button id="refreshCustomerNo" type="button" class="btn-secondary inline-flex h-9 w-9 items-center justify-center rounded-full transition" aria-label="Regenerate" title="Regenerate">
                   <span class="sr-only">Regenerate</span>
                   <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4.9 4.9A8.5 8.5 0 0 1 12 3c4.97 0 9 4.03 9 9"/>
@@ -48,16 +48,16 @@
                   </svg>
                 </button>
               </div>
-              <p class="mt-2 text-sm leading-6 text-slate-600">This auto-generated identifier would be an employee number, citizen id or process id.</p>
+              <p class="mt-2 text-sm leading-6 text-slate-600">Auto-generated identifier.</p>
             </div>
 
             <div class="rounded-3xl border border-slate-200 bg-white p-5">
-              <label for="siteCodeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">site_code</label>
+              <label for="siteCodeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">Flow type (site_code)</label>
               <select id="siteCodeSelect" data-default-site-code="__SITE_CODE__" data-supported-site-codes="__SUPPORTED_SITE_CODES__" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
                 __SITE_CODE_OPTIONS__
               </select>
               <div class="mt-4">
-                <label for="localeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">locale</label>
+                <label for="localeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">Language (locale)</label>
               <select id="localeSelect" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20" data-default-locale="en_US">
                 <option value="en_US" selected>en_US</option>
                 <option value="de_DE">de_DE</option>
