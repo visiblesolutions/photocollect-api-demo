@@ -41,7 +41,7 @@ const resultMeta = document.getElementById("resultMeta");
 const retryFetchButton = document.getElementById("retryFetch");
 const closeResultButtons = document.querySelectorAll("[data-close-result]");
 const IFRAME_CONTENT_RESIZE_MESSAGE_TYPE = "photo-collect:content-resize";
-const IFRAME_MIN_HEIGHT = 720;
+const IFRAME_MIN_HEIGHT = 420;
 let iframeHeightFrame = 0;
 let lastIframeHeight = 0;
 
