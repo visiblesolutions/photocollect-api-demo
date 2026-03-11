@@ -2,8 +2,8 @@
 
 This is a Slim + vanilla JavaScript demo for the Photo Collect flow:
 
-1. Choose Deeplink or API on the start screen.
-2. Generate either a signed deeplink or a `POST /invitation` invitation URL.
+1. Choose Deeplink, Deeplink iFrame, or API on the start screen.
+2. Generate either a signed deeplink, an embedded deeplink, or a `POST /invitation` invitation URL.
 3. Poll `GET /export` and show the latest photo for the provided `customer_no`.
 
 ## Configuration
