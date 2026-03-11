@@ -74,6 +74,10 @@ p a {
   height: auto;
 }
 
+.link-iframe {
+  min-height: 720px;
+}
+
 #resultImage {
   max-height: 520px;
 }
