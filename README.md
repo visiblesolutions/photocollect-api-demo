@@ -1,6 +1,6 @@
 # Photo Collect API Demo
 
-This is a Slim + vanilla JavaScript demo for the Photo Collect flow:
+This is a demo for the Photo Collect flow:
 
 1. Choose Deeplink, Deeplink iFrame, or API on the start screen.
 2. Generate either a signed deeplink, an embedded deeplink, or a `POST /invitation` invitation URL.
@@ -46,3 +46,32 @@ Try it here: [Live demo](https://apidemo.photocollect.io).
 ## API documentation
 
 Refer to the [API documentation](https://apidoc.photocollect.io).
+
+## Deeplink iFrame child -> parent messages
+
+In the `deeplink-iframe` flow, the parent page listens to `window.postMessage` events from the embedded deeplink iFrame.
+
+Supported child -> parent message types:
+
+1. `photo-collect:process-step`
+   - Purpose: report the current process step in the iFrame flow.
+   - Payload:
+     ```json
+     {
+       "type": "photo-collect:process-step",
+       "value": "finalize"
+     }
+     ```
+   - Parent behavior:
+     - Updates the process-step status panel.
+     - If `value === "finalize"` in `deeplink-iframe` flow, the flow is finished and the photo can be downloaded.
+
+2. `photo-collect:content-resize`
+   - Purpose: tell the parent to resize the iFrame height.
+   - Payload:
+     ```json
+     {
+       "type": "photo-collect:content-resize",
+       "height": 980
+     }
+     ```
