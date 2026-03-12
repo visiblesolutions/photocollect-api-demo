@@ -28,6 +28,8 @@ The frontend styles are generated with Tailwind CLI:
 
 `public/assets/styles.css` is the compiled production stylesheet linked by the app.
 
+The browser JavaScript is organized as native ES modules under `public/assets/app/` and loaded directly by the template. No JavaScript bundler is required for runtime deployment.
+
 
 ## Deploy checklist
 
