@@ -11,6 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
   <style>
+    .link-iframe {
+      transition: none;
+    }
+
     .link-flow-swap {
       display: grid;
       gap: 1rem;
@@ -190,6 +194,9 @@
                           <button id="linkInlineRetry" type="button" class="btn-secondary hidden inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition" data-i18n="result.buttons.retry">
                             Retry
                           </button>
+                          <button id="linkInlineClose" type="button" data-close-result class="btn-primary hidden inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition" data-i18n="result.buttons.close">
+                            Close
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -263,6 +270,6 @@
     </div>
   </div>
 
-  <script src="assets/app.js"></script>
+  <script type="module" src="assets/app.js"></script>
 </body>
 </html>
