@@ -143,7 +143,7 @@ $app->get('/', function (Request $request, Response $response) use ($baseHref, $
 $app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode, $resolveLocale): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
-    $redirectUri = trim((string) ($data['redirect_uri'] ?? ''));
+    $redirectUri = isset($data['redirect_uri']) ? trim($data['redirect_uri']) : null; //empty string = disable default redirect
     $siteCode = $resolveSiteCode($data['site_code'] ?? null);
     $locale = $resolveLocale($data['locale'] ?? null);
 
