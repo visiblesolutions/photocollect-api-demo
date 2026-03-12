@@ -1,0 +1,11 @@
+{
+  "name": "photocollect-api-demo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build:css": "tailwindcss -i ./public/assets/tailwind-input.css -o ./public/assets/styles.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}
