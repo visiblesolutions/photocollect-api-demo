@@ -9,11 +9,9 @@ const startDeeplinkButton = document.getElementById("startDeeplink");
 const startDeeplinkIframeButton = document.getElementById("startDeeplinkIframe");
 const startApiButton = document.getElementById("startApi");
 const logoHomeButton = document.getElementById("logoHome");
-const linkCustomerNo = document.getElementById("linkCustomerNo");
+const appLanguageButtons = document.querySelectorAll("[data-ui-language]");
 const linkTitle = document.getElementById("linkTitle");
 const linkDescription = document.getElementById("linkDescription");
-const linkScreenGrid = document.getElementById("linkScreenGrid");
-const linkSidebarPanel = document.getElementById("linkSidebarPanel");
 const linkMainPanel = document.getElementById("linkMainPanel");
 const linkValuePanel = document.getElementById("linkValuePanel");
 const linkValue = document.getElementById("linkValue");
@@ -23,13 +21,9 @@ const linkProcessStepPanel = document.getElementById("linkProcessStepPanel");
 const linkProcessStepValue = document.getElementById("linkProcessStepValue");
 const openLinkButton = document.getElementById("openLinkButton");
 const linkActionRow = document.getElementById("linkActionRow");
-const qrLinkPanel = document.getElementById("qrLinkPanel");
-const qrLinkValue = document.getElementById("qrLinkValue");
 const checkPhotoNowIframeButton = document.getElementById("checkPhotoNowIframe");
 const checkPhotoNowButton = document.getElementById("checkPhotoNow");
 const linkUploadHint = document.getElementById("linkUploadHint");
-const qrCanvas = document.getElementById("qrCanvas");
-const resultCustomerNo = document.getElementById("resultCustomerNo");
 const resultStatusBadge = document.getElementById("resultStatusBadge");
 const resultStatusText = document.getElementById("resultStatusText");
 const resultPlaceholder = document.getElementById("resultPlaceholder");
@@ -89,6 +83,10 @@ const LOCALE_COOKIE_NAME = "photo_collect_locale";
 const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 const SUPPORTED_LOCALES = ["en_US", "de_DE"];
 const DEFAULT_LOCALE = "en_US";
+const UI_LANGUAGE_COOKIE_NAME = "photo_collect_ui_language";
+const UI_LANGUAGE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+const SUPPORTED_UI_LANGUAGES = ["en", "de"];
+const DEFAULT_UI_LANGUAGE = "en";
 
 function readCookie(name) {
   const prefix = `${encodeURIComponent(name)}=`;
@@ -131,42 +129,54 @@ function persistLocale(locale) {
   writeCookie(LOCALE_COOKIE_NAME, locale, LOCALE_COOKIE_MAX_AGE_SECONDS);
 }
 
+function persistUiLanguage(language) {
+  if (!SUPPORTED_UI_LANGUAGES.includes(language)) {
+    return;
+  }
+
+  writeCookie(UI_LANGUAGE_COOKIE_NAME, language, UI_LANGUAGE_COOKIE_MAX_AGE_SECONDS);
+}
+
+function normalizeUiLanguage(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return SUPPORTED_UI_LANGUAGES.includes(normalized) ? normalized : DEFAULT_UI_LANGUAGE;
+}
+
+function mapLocaleToUiLanguage(locale) {
+  return String(locale || "").toLowerCase().startsWith("de") ? "de" : "en";
+}
+
+function getDefaultUiLanguage() {
+  const fromCookie = readCookie(UI_LANGUAGE_COOKIE_NAME);
+  if (fromCookie) {
+    return normalizeUiLanguage(fromCookie);
+  }
+
+  const fromLocaleCookie = readCookie(LOCALE_COOKIE_NAME);
+  if (fromLocaleCookie && SUPPORTED_LOCALES.includes(fromLocaleCookie)) {
+    return mapLocaleToUiLanguage(fromLocaleCookie);
+  }
+
+  const browserLanguage = normalizeUiLanguage((window.navigator.language || "").slice(0, 2));
+  return SUPPORTED_UI_LANGUAGES.includes(browserLanguage) ? browserLanguage : DEFAULT_UI_LANGUAGE;
+}
+
 const state = {
   customerNo: "",
   flow: "",
   siteCode: getDefaultSiteCode(),
   locale: getDefaultLocale(),
+  uiLanguage: getDefaultUiLanguage(),
+  translations: {},
   linkUrl: "",
   processStep: "",
-  qr: null,
   pollHandle: null,
   pollAttempts: 0,
-  maxPollAttempts: 15
+  maxPollAttempts: 15,
+  resultState: null,
+  resultPlaceholderState: null,
+  lastExportPayload: null
 };
-
-function generateCustomerNo() {
-  const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const length = 16;
-  let result = "";
-
-  if (window.crypto && window.crypto.getRandomValues) {
-    const bytes = new Uint8Array(length);
-    window.crypto.getRandomValues(bytes);
-
-    bytes.forEach((byte) => {
-      result += alphabet[byte % alphabet.length];
-    });
-
-    return result;
-  }
-
-  for (let index = 0; index < length; index += 1) {
-    const randomIndex = Math.floor(Math.random() * alphabet.length);
-    result += alphabet[randomIndex];
-  }
-
-  return result;
-}
 
 function appBaseUrl() {
   return new URL(document.baseURI);
@@ -249,9 +259,9 @@ function showScreen(name) {
 }
 
 function syncCustomerNo() {
-  customerNoBadge.textContent = state.customerNo;
-  linkCustomerNo.textContent = state.customerNo;
-  resultCustomerNo.textContent = state.customerNo;
+  if (customerNoBadge) {
+    customerNoBadge.textContent = state.customerNo;
+  }
 }
 
 function syncSiteCode() {
@@ -284,25 +294,59 @@ function syncLocale() {
   persistLocale(state.locale);
 }
 
+function updateUiLanguageButtons() {
+  appLanguageButtons.forEach((button) => {
+    const isActive = button.dataset.uiLanguage === state.uiLanguage;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+
+  document.documentElement.lang = state.uiLanguage;
+}
+
+function setUiLanguage(language, { persist = true } = {}) {
+  state.uiLanguage = normalizeUiLanguage(language);
+  updateUiLanguageButtons();
+
+  if (persist) {
+    persistUiLanguage(state.uiLanguage);
+  }
+}
+
+function setResultPlaceholder(key, params = {}) {
+  state.resultPlaceholderState = { key, params };
+  resultPlaceholder.textContent = t(key, params, resultPlaceholder.textContent || "");
+}
+
+function setRawResultPlaceholder(text) {
+  state.resultPlaceholderState = { rawText: String(text || "") };
+  resultPlaceholder.textContent = state.resultPlaceholderState.rawText;
+}
+
 function resetGeneratedState() {
   clearPolling();
   state.flow = "";
   state.linkUrl = "";
   state.processStep = "";
   state.pollAttempts = 0;
+  state.resultState = null;
+  state.resultPlaceholderState = null;
+  state.lastExportPayload = null;
   openLinkButton.href = "#";
-  openLinkButton.textContent = "Open Link";
+  openLinkButton.textContent = t("link.buttons.openLink", {}, "Open Link");
   openLinkButton.classList.remove("hidden");
-  linkSidebarPanel.classList.remove("hidden");
-  linkScreenGrid.style.gridTemplateColumns = "";
-  qrLinkPanel.classList.add("hidden");
   linkValuePanel.classList.remove("hidden");
   linkIframePanel.classList.add("hidden");
   if (checkPhotoNowButton) {
+    checkPhotoNowButton.textContent = t("link.buttons.checkForPhoto", {}, "Check for Photo");
     checkPhotoNowButton.classList.remove("hidden");
   }
   if (checkPhotoNowIframeButton) {
+    checkPhotoNowIframeButton.textContent = t("link.buttons.checkForPhoto", {}, "Check for Photo");
     checkPhotoNowIframeButton.classList.add("hidden");
+  }
+  if (linkUploadHint) {
+    linkUploadHint.classList.remove("hidden");
   }
   if (linkIframe) {
     linkIframe.style.height = "";
@@ -310,7 +354,6 @@ function resetGeneratedState() {
   lastIframeHeight = 0;
   linkIframe.src = "about:blank";
   linkValue.textContent = "";
-  qrLinkValue.textContent = "";
   resultGallery.classList.add("hidden");
   resultImage.src = "";
   resultImage.classList.add("hidden");
@@ -320,8 +363,32 @@ function resetGeneratedState() {
   resultMeta.classList.add("hidden");
   retryFetchButton.classList.add("hidden");
   resultPlaceholder.classList.remove("hidden");
-  resultPlaceholder.textContent = "Waiting for the exported image...";
-  setResultState("waiting", "Waiting for export", "The app polls GET /export through the local PHP proxy until a file is ready.");
+  setResultPlaceholder("result.placeholder.waitingProcessedData");
+  setResultState("waiting", "result.badges.waiting", "result.status.waitingProxy");
+}
+
+function generateCustomerNo() {
+  const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const length = 16;
+  let result = "";
+
+  if (window.crypto && window.crypto.getRandomValues) {
+    const bytes = new Uint8Array(length);
+    window.crypto.getRandomValues(bytes);
+
+    bytes.forEach((byte) => {
+      result += alphabet[byte % alphabet.length];
+    });
+
+    return result;
+  }
+
+  for (let index = 0; index < length; index += 1) {
+    const randomIndex = Math.floor(Math.random() * alphabet.length);
+    result += alphabet[randomIndex];
+  }
+
+  return result;
 }
 
 function resetToStart(pushHistory = true) {
@@ -351,33 +418,179 @@ function setLoadingButtons(isLoading) {
   });
 }
 
-function renderQrCode(url) {
-  if (!window.QRious) {
-    const context = qrCanvas.getContext("2d");
-    if (context) {
-      context.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
-      context.fillStyle = "#f8fafc";
-      context.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
-      context.fillStyle = "#64748b";
-      context.font = "600 16px 'Space Grotesk', sans-serif";
-      context.textAlign = "center";
-      context.fillText("QR unavailable", qrCanvas.width / 2, qrCanvas.height / 2);
+async function loadTranslation(language) {
+  const response = await fetch(new URL(`assets/locales/${language}.json`, document.baseURI).toString(), {
+    headers: {
+      "Accept": "application/json"
     }
-    return;
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to load locale: ${language}`);
   }
 
-  if (!state.qr) {
-    state.qr = new window.QRious({
-      element: qrCanvas,
-      size: 240,
-      value: url,
-      foreground: "#0f172a",
-      background: "#ffffff"
+  return response.json();
+}
+
+async function loadTranslations() {
+  const entries = await Promise.all(
+    SUPPORTED_UI_LANGUAGES.map(async (language) => [language, await loadTranslation(language)])
+  );
+
+  state.translations = Object.fromEntries(entries);
+}
+
+function getTranslationValue(language, key) {
+  const dictionary = state.translations[language];
+  if (!dictionary) {
+    return null;
+  }
+
+  return key.split(".").reduce((value, part) => {
+    if (value && typeof value === "object" && Object.prototype.hasOwnProperty.call(value, part)) {
+      return value[part];
+    }
+
+    return null;
+  }, dictionary);
+}
+
+function interpolate(message, params = {}) {
+  return String(message).replace(/\{(\w+)\}/g, (match, key) => {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      return String(params[key]);
+    }
+
+    return match;
+  });
+}
+
+function t(key, params = {}, fallback = key) {
+  const localized = getTranslationValue(state.uiLanguage, key);
+  const englishFallback = getTranslationValue(DEFAULT_UI_LANGUAGE, key);
+  const resolved = localized ?? englishFallback ?? fallback;
+
+  return typeof resolved === "string" ? interpolate(resolved, params) : fallback;
+}
+
+function toDatasetKey(attributeName) {
+  return attributeName
+    .split("-")
+    .map((part, index) => (index === 0 ? part : `${part.charAt(0).toUpperCase()}${part.slice(1)}`))
+    .join("");
+}
+
+function applyStaticTranslations() {
+  document.title = t("meta.title", {}, document.title);
+
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    const fallback = element.dataset.i18nFallback || element.textContent || "";
+    if (!element.dataset.i18nFallback) {
+      element.dataset.i18nFallback = fallback;
+    }
+
+    element.textContent = t(element.dataset.i18n, {}, fallback);
+  });
+
+  document.querySelectorAll("[data-i18n-attr]").forEach((element) => {
+    const mappings = String(element.dataset.i18nAttr || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.includes(":"));
+
+    mappings.forEach((mapping) => {
+      const separatorIndex = mapping.indexOf(":");
+      const attributeName = mapping.slice(0, separatorIndex).trim();
+      const key = mapping.slice(separatorIndex + 1).trim();
+      const fallbackDatasetKey = `i18nAttrFallback${toDatasetKey(attributeName).charAt(0).toUpperCase()}${toDatasetKey(attributeName).slice(1)}`;
+      const fallback = element.dataset[fallbackDatasetKey] || element.getAttribute(attributeName) || "";
+
+      if (!element.dataset[fallbackDatasetKey]) {
+        element.dataset[fallbackDatasetKey] = fallback;
+      }
+
+      element.setAttribute(attributeName, t(key, {}, fallback));
     });
+  });
+}
+
+function localizeSiteCodeOptions() {
+  if (!siteCodeSelect) {
     return;
   }
 
-  state.qr.value = url;
+  Array.from(siteCodeSelect.options).forEach((option) => {
+    const fallback = option.dataset.defaultLabel || option.value;
+    option.textContent = t(`siteCodes.${option.value}`, {}, fallback);
+  });
+}
+
+function localizeLocaleOptions() {
+  if (!localeSelect) {
+    return;
+  }
+
+  Array.from(localeSelect.options).forEach((option) => {
+    const key = option.dataset.localeOption;
+    if (!key) {
+      return;
+    }
+
+    option.textContent = t(`start.processLocaleOptions.${key}`, {}, option.textContent);
+  });
+}
+
+function refreshLinkScreenCopy() {
+  if (screenLink.classList.contains("hidden")) {
+    return;
+  }
+
+  if (state.flow === "deeplink") {
+    showDeeplinkFlowScreen();
+    return;
+  }
+
+  if (state.flow === "deeplink-iframe") {
+    showDeeplinkIframeFlowScreen();
+    return;
+  }
+
+  if (state.flow === "api") {
+    showApiFlowScreen();
+  }
+}
+
+function refreshResultScreenCopy() {
+  if (screenResult.classList.contains("hidden")) {
+    return;
+  }
+
+  if (state.lastExportPayload) {
+    renderResult(state.lastExportPayload);
+    return;
+  }
+
+  if (state.resultState) {
+    const { kind, badgeKey, bodyKey, bodyParams } = state.resultState;
+    setResultState(kind, badgeKey, bodyKey, bodyParams);
+  }
+
+  if (state.resultPlaceholderState) {
+    const { key, params, rawText } = state.resultPlaceholderState;
+    if (typeof rawText === "string") {
+      resultPlaceholder.textContent = rawText;
+    } else {
+      setResultPlaceholder(key, params);
+    }
+  }
+}
+
+function applyTranslations() {
+  applyStaticTranslations();
+  localizeSiteCodeOptions();
+  localizeLocaleOptions();
+  refreshLinkScreenCopy();
+  refreshResultScreenCopy();
 }
 
 function applyProcessStepStatus(step) {
@@ -390,7 +603,11 @@ function applyProcessStepStatus(step) {
     return;
   }
 
-  linkProcessStepValue.textContent = normalizedStep || "—";
+  const processStepLabel = normalizedStep
+    ? t(`link.processSteps.${normalizedStep}`, {}, normalizedStep)
+    : t("common.notSet", {}, "-");
+
+  linkProcessStepValue.textContent = processStepLabel;
   linkProcessStepPanel.className = [
     "rounded-3xl border px-4 py-3",
     isFinalize ? "border-blue-200 bg-blue-50 text-blue-700" : "border-amber-200 bg-amber-50 text-amber-700"
@@ -518,38 +735,34 @@ function initializeIframeResizePropagation() {
 
 function setLinkScreen(copy) {
   const {
-    title,
-    description,
-    buttonLabel,
-    showSidebar,
+    titleKey,
+    descriptionKey,
+    buttonLabelKey,
     showIframe,
-    showQrLinkPanel,
-    hideLinkValuePanel,
     showOpenButton,
     showUploadHint,
     showCheckPhotoNow
   } = {
-    showSidebar: true,
     showIframe: false,
-    showQrLinkPanel: false,
-    hideLinkValuePanel: false,
     showOpenButton: true,
     showUploadHint: true,
     showCheckPhotoNow: true,
-    buttonLabel: "Open Link",
+    buttonLabelKey: "link.buttons.openLink",
     ...copy
   };
 
-  linkTitle.textContent = title;
-  linkDescription.textContent = description;
+  linkTitle.textContent = t(titleKey, {}, linkTitle.textContent || "");
+  linkDescription.textContent = t(descriptionKey, {}, linkDescription.textContent || "");
   linkValue.textContent = state.linkUrl;
-  qrLinkValue.textContent = state.linkUrl;
-  openLinkButton.textContent = buttonLabel;
+  openLinkButton.textContent = t(buttonLabelKey, {}, openLinkButton.textContent || "Open Link");
+  if (checkPhotoNowButton) {
+    checkPhotoNowButton.textContent = t("link.buttons.checkForPhoto", {}, checkPhotoNowButton.textContent || "Check for Photo");
+  }
+  if (checkPhotoNowIframeButton) {
+    checkPhotoNowIframeButton.textContent = t("link.buttons.checkForPhoto", {}, checkPhotoNowIframeButton.textContent || "Check for Photo");
+  }
   openLinkButton.href = state.linkUrl;
-  linkSidebarPanel.classList.toggle("hidden", !showSidebar);
-  linkScreenGrid.style.gridTemplateColumns = showSidebar ? "" : "minmax(0, 1fr)";
-  qrLinkPanel.classList.toggle("hidden", !showQrLinkPanel);
-  linkValuePanel.classList.toggle("hidden", hideLinkValuePanel);
+  linkValuePanel.classList.toggle("hidden", showIframe);
   linkIframePanel.classList.toggle("hidden", !showIframe);
   if (!showIframe) {
     linkIframe.style.height = "";
@@ -581,34 +794,25 @@ function setLinkScreen(copy) {
     applyProcessStepStatus(state.processStep || "pending");
     scheduleIframeContentHeightMeasure();
   }
-  if (showSidebar) {
-    renderQrCode(state.linkUrl);
-  }
   showScreen("link");
 }
 
 function showDeeplinkFlowScreen() {
   setLinkScreen({
-    title: "Open the signed deeplink",
-    description: "This deeplink was created on the proxy with the configured secret. A pending invitation on Photo Collect is only created when the link is used.",
-    buttonLabel: "Open Link",
-    showSidebar: true,
+    titleKey: "link.flows.deeplink.title",
+    descriptionKey: "link.flows.deeplink.description",
+    buttonLabelKey: "link.flows.deeplink.button",
     showIframe: false,
-    showOpenButton: true,
-    showQrLinkPanel: true,
-    hideLinkValuePanel: true
+    showOpenButton: true
   });
 }
 
 function showDeeplinkIframeFlowScreen() {
   setLinkScreen({
-    title: "Run the signed deeplink inside the iFrame",
-    description: "This deeplink was created on the proxy with the configured secret and is loaded directly below.",
-    buttonLabel: "Open Link",
-    showSidebar: false,
+    titleKey: "link.flows.iframe.title",
+    descriptionKey: "link.flows.iframe.description",
+    buttonLabelKey: "link.flows.iframe.button",
     showIframe: true,
-    showQrLinkPanel: false,
-    hideLinkValuePanel: true,
     showOpenButton: false,
     showUploadHint: false,
     showCheckPhotoNow: false
@@ -617,19 +821,23 @@ function showDeeplinkIframeFlowScreen() {
 
 function showApiFlowScreen() {
   setLinkScreen({
-    title: "Open the invitation link",
-    description: "This link comes from POST /invitation. The process created a pending invitation on Photo Collect.",
-    buttonLabel: "Open Link",
-    showSidebar: true,
+    titleKey: "link.flows.api.title",
+    descriptionKey: "link.flows.api.description",
+    buttonLabelKey: "link.flows.api.button",
     showIframe: false,
-    showOpenButton: true,
-    showQrLinkPanel: false,
-    hideLinkValuePanel: false
+    showOpenButton: true
   });
 }
 
-function setResultState(kind, badgeText, bodyText) {
-  resultStatusBadge.textContent = badgeText;
+function setResultState(kind, badgeKey, bodyKey, bodyParams = {}) {
+  state.resultState = {
+    kind,
+    badgeKey,
+    bodyKey,
+    bodyParams
+  };
+
+  resultStatusBadge.textContent = t(badgeKey, {}, resultStatusBadge.textContent || "");
   resultStatusBadge.className = "inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold tracking-[0.18em]";
 
   if (kind === "ready") {
@@ -640,7 +848,7 @@ function setResultState(kind, badgeText, bodyText) {
     resultStatusBadge.classList.add("bg-amber-100", "text-amber-700");
   }
 
-  resultStatusText.textContent = bodyText;
+  resultStatusText.textContent = t(bodyKey, bodyParams, resultStatusText.textContent || "");
 }
 
 function escapeHtml(value) {
@@ -664,7 +872,7 @@ async function requestJson(path, options = {}) {
   const payload = await response.json();
 
   if (!response.ok) {
-    throw new Error(payload.error || "Request failed.");
+    throw new Error(payload.error || t("errors.requestFailed", {}, "Request failed."));
   }
 
   return payload;
@@ -727,9 +935,9 @@ async function startFlow(flow) {
       return;
     }
 
-    throw new Error("Unknown flow selected.");
+    throw new Error(t("errors.unknownFlow", {}, "Unknown flow selected."));
   } catch (error) {
-    window.alert(error.message);
+    window.alert(error.message || t("errors.requestFailed", {}, "Request failed."));
     showScreen("start");
   } finally {
     setLoadingButtons(false);
@@ -737,12 +945,20 @@ async function startFlow(flow) {
 }
 
 function renderResult(file) {
+  state.lastExportPayload = file;
+  state.resultPlaceholderState = null;
+
   const exportFile = typeof file.file === "object" && file.file !== null ? file.file : {};
   const signatureContent = typeof exportFile.signature_content === "string" ? exportFile.signature_content.trim() : "";
-  const hasSignature = state.siteCode === "api-demo-signature" && signatureContent !== "";
+  const signatureType = typeof exportFile.signature_type === "string" ? exportFile.signature_type.trim() : "";
+  const hasSignature = signatureContent !== "";
   const signatureSource = signatureContent.startsWith("data:")
     ? signatureContent
-    : `data:image/png;base64,${signatureContent}`;
+    : `data:${signatureType};base64,${signatureContent}`;
+  const notAvailable = t("common.notAvailable", {}, "n/a");
+  const signatureKey = hasSignature
+    ? "result.meta.signatureIncluded"
+    : "result.meta.signatureNotRequested";
 
   resultGallery.classList.remove("hidden");
   resultImage.src = file.image_url || "";
@@ -761,16 +977,16 @@ function renderResult(file) {
 
   resultMeta.classList.remove("hidden");
   resultMeta.innerHTML = [
-    `<div><strong>locale:</strong> ${escapeHtml(state.locale || "n/a")}</div>`,
-    `<div><strong>site_code:</strong> ${escapeHtml(file.site_code || state.siteCode || "n/a")}</div>`,
-    `<div><strong>File:</strong> ${escapeHtml(exportFile.file_name || "n/a")}</div>`,
-    `<div><strong>Uploaded:</strong> ${escapeHtml(exportFile.uploaded_at || "n/a")}</div>`,
-    `<div><strong>Exported:</strong> ${escapeHtml(exportFile.exported_at || "n/a")}</div>`,
-    `<div><strong>Invitation:</strong> ${escapeHtml(exportFile.invitation_key || "n/a")}</div>`,
-    `<div><strong>Signature:</strong> ${escapeHtml(hasSignature ? "Included" : state.siteCode === "api-demo-signature" ? "Not present yet" : "Not requested")}</div>`
+    `<div><strong>${escapeHtml(t("result.meta.locale", {}, "locale"))}:</strong> ${escapeHtml(state.locale || notAvailable)}</div>`,
+    `<div><strong>${escapeHtml(t("result.meta.siteCode", {}, "site_code"))}:</strong> ${escapeHtml(file.site_code || state.siteCode || notAvailable)}</div>`,
+    `<div><strong>${escapeHtml(t("result.meta.file", {}, "File"))}:</strong> ${escapeHtml(exportFile.file_name || notAvailable)}</div>`,
+    `<div><strong>${escapeHtml(t("result.meta.uploaded", {}, "Uploaded"))}:</strong> ${escapeHtml(exportFile.uploaded_at || notAvailable)}</div>`,
+    `<div><strong>${escapeHtml(t("result.meta.exported", {}, "Exported"))}:</strong> ${escapeHtml(exportFile.exported_at || notAvailable)}</div>`,
+    `<div><strong>${escapeHtml(t("result.meta.invitation", {}, "Invitation"))}:</strong> ${escapeHtml(exportFile.invitation_key || notAvailable)}</div>`,
+    `<div><strong>${escapeHtml(t("result.meta.signature", {}, "Signature"))}:</strong> ${escapeHtml(t(signatureKey, {}, ""))}</div>`
   ].join("");
   retryFetchButton.classList.add("hidden");
-  setResultState("ready", "Ready", "The latest export for this customer_no is shown below.");
+  setResultState("ready", "result.badges.ready", "result.status.ready");
 }
 
 async function pollForPhoto() {
@@ -789,9 +1005,13 @@ async function pollForPhoto() {
       return;
     }
 
+    state.lastExportPayload = null;
     resultPlaceholder.classList.remove("hidden");
-    resultPlaceholder.textContent = `No photo yet. Poll attempt ${state.pollAttempts} of ${state.maxPollAttempts}...`;
-    setResultState("waiting", "Waiting", "The export is not ready yet. The app will keep polling for a short time.");
+    setResultPlaceholder("result.placeholder.noPhotoAttempt", {
+      attempt: state.pollAttempts,
+      maxAttempts: state.maxPollAttempts
+    });
+    setResultState("waiting", "result.badges.waiting", "result.status.notReady");
 
     if (state.pollAttempts < state.maxPollAttempts) {
       state.pollHandle = window.setTimeout(pollForPhoto, 4000);
@@ -799,18 +1019,20 @@ async function pollForPhoto() {
     }
 
     retryFetchButton.classList.remove("hidden");
-    setResultState("waiting", "Still waiting", "No exported file was found yet. Retry after the upload has finished.");
+    setResultState("waiting", "result.badges.stillWaiting", "result.status.retryLater");
   } catch (error) {
+    state.lastExportPayload = null;
     retryFetchButton.classList.remove("hidden");
     resultPlaceholder.classList.remove("hidden");
-    resultPlaceholder.textContent = error.message;
-    setResultState("error", "Error", "The export check failed. You can retry once the upstream service is reachable.");
+    setRawResultPlaceholder(error.message);
+    setResultState("error", "result.badges.error", "result.status.error");
   }
 }
 
 function openResultScreen() {
   clearPolling();
   state.pollAttempts = 0;
+  state.lastExportPayload = null;
   window.history.replaceState({}, "", buildRedirectUrl());
   resultGallery.classList.add("hidden");
   resultImage.classList.add("hidden");
@@ -821,9 +1043,9 @@ function openResultScreen() {
   resultMeta.classList.add("hidden");
   resultMeta.innerHTML = "";
   resultPlaceholder.classList.remove("hidden");
-  resultPlaceholder.textContent = "Waiting for the exported photo...";
+  setResultPlaceholder("result.placeholder.waitingProcessedData");
   showScreen("result");
-  setResultState("waiting", "Waiting", "The app polls GET /export through the local proxy until a file is ready.");
+  setResultState("waiting", "result.badges.waiting", "result.status.waitingProxy");
   pollForPhoto();
 }
 
@@ -834,6 +1056,7 @@ function bootstrapFromUrl() {
   const flow = params.get("flow");
   const siteCode = params.get("site_code");
   const locale = params.get("locale");
+  const hasPersistedUiLanguage = Boolean(readCookie(UI_LANGUAGE_COOKIE_NAME));
 
   if (customerNo) {
     state.customerNo = customerNo;
@@ -843,6 +1066,11 @@ function bootstrapFromUrl() {
 
   state.siteCode = (siteCode && SUPPORTED_SITE_CODES.includes(siteCode)) ? siteCode : getDefaultSiteCode();
   state.locale = (locale && SUPPORTED_LOCALES.includes(locale)) ? locale : getDefaultLocale();
+
+  if (!hasPersistedUiLanguage && locale) {
+    setUiLanguage(mapLocaleToUiLanguage(locale), { persist: false });
+  }
+
   syncSiteCode();
   syncLocale();
   state.flow = flow || "";
@@ -875,6 +1103,13 @@ if (localeSelect) {
   });
 }
 
+appLanguageButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setUiLanguage(button.dataset.uiLanguage);
+    applyTranslations();
+  });
+});
+
 startDeeplinkButton.addEventListener("click", () => {
   startFlow("deeplink");
 });
@@ -884,7 +1119,7 @@ startDeeplinkIframeButton.addEventListener("click", () => {
 });
 
 startApiButton.addEventListener("click", () => {
-startFlow("api");
+  startFlow("api");
 });
 
 window.addEventListener("message", (event) => {
@@ -941,5 +1176,18 @@ closeResultButtons.forEach((button) => {
   });
 });
 
-initializeIframeResizePropagation();
-bootstrapFromUrl();
+async function initializeApp() {
+  setUiLanguage(state.uiLanguage, { persist: false });
+  initializeIframeResizePropagation();
+
+  try {
+    await loadTranslations();
+  } catch (error) {
+    console.error(error);
+  }
+
+  bootstrapFromUrl();
+  applyTranslations();
+}
+
+initializeApp();
