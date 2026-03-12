@@ -17,29 +17,36 @@
     <div class="ambient ambient-two"></div>
 
     <div class="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-10 sm:px-6 lg:px-8">
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <button id="logoHome" type="button" class="inline-flex items-center rounded-xl border-0 bg-transparent p-0 appearance-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50" aria-label="Back to start" data-i18n-attr="aria-label:navigation.backToStart,title:navigation.backToStart">
+          <img src="assets/logo.svg" alt="Photo Collect" class="h-8 w-auto sm:h-10">
+        </button>
+
+        <div class="language-switcher">
+          <span class="language-switcher__label" data-i18n="header.websiteLanguage">Website language</span>
+          <div class="language-switcher__buttons" role="group" aria-label="Website language" data-i18n-attr="aria-label:header.websiteLanguage">
+            <button type="button" class="language-switcher__button" data-ui-language="en" aria-pressed="false">EN</button>
+            <button type="button" class="language-switcher__button" data-ui-language="de" aria-pressed="false">DE</button>
+          </div>
+        </div>
+      </div>
+
       <main class="flex flex-1 items-center">
         <section class="w-full rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-soft backdrop-blur-xl sm:p-8">
-          <div class="mb-8 flex flex-wrap items-center gap-3">
-            <button id="logoHome" type="button" class="inline-flex items-center rounded-xl border-0 bg-transparent p-0 appearance-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50" aria-label="Back to start">
-              <img src="assets/logo.svg" alt="Photo Collect" class="h-8 w-auto sm:h-10">
-            </button>
-          </div>
-
-        <section id="screen-start" data-screen class="space-y-8">
+          <section id="screen-start" data-screen class="space-y-8">
             <div class="space-y-5">
-              <h1 class="max-w-2xl text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl">
-                Integration Demo
-              </h1>
-              <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Photo Collect can be integrated into any IT infrastructure for uploading, processing and returning ID photos.
+              <h1 class="max-w-2xl text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl" data-i18n="start.title">Integration Demo</h1>
+              <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg" data-i18n="start.description">
+                Photo Collect can be integrated into any IT infrastructure for uploading, processing and returning ID photos.
               </p>
             </div>
 
-            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <div class="flex items-center justify-between gap-3">
-                <p id="customerNoBadge" class="text-2xl font-semibold tracking-[-0.03em] text-slate-950"></p>
-                <button id="refreshCustomerNo" type="button" class="btn-secondary inline-flex h-9 w-9 items-center justify-center rounded-full transition" aria-label="Regenerate" title="Regenerate">
-                  <span class="sr-only">Regenerate</span>
+            <div class="rounded-3xl border border-slate-200 bg-white p-5">
+              <label class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.customerNoLabel">Auto-generated identifier (customer_no)</label>
+              <div class="flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 shadow-sm">
+                <p id="customerNoBadge" class="min-w-0 flex-1 truncate font-mono text-sm text-slate-800"></p>
+                <button id="refreshCustomerNo" type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition" aria-label="Regenerate" title="Regenerate" data-i18n-attr="aria-label:start.regenerate,title:start.regenerate">
+                  <span class="sr-only" data-i18n="start.regenerate">Regenerate</span>
                   <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4.9 4.9A8.5 8.5 0 0 1 12 3c4.97 0 9 4.03 9 9"/>
                     <path d="M4 9V4h5"/>
@@ -48,109 +55,87 @@
                   </svg>
                 </button>
               </div>
-              <p class="mt-2 text-sm leading-6 text-slate-600">Auto-generated identifier.</p>
-            </div>
 
-            <div class="rounded-3xl border border-slate-200 bg-white p-5">
-              <label for="siteCodeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">Flow type (site_code)</label>
-              <select id="siteCodeSelect" data-default-site-code="__SITE_CODE__" data-supported-site-codes="__SUPPORTED_SITE_CODES__" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
-                __SITE_CODE_OPTIONS__
-              </select>
               <div class="mt-4">
-                <label for="localeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500">Language (locale)</label>
-              <select id="localeSelect" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20" data-default-locale="en_US">
-                <option value="en_US" selected>en_US</option>
-                <option value="de_DE">de_DE</option>
-              </select>
+                <label for="siteCodeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.flowTypeLabel">Flow type (site_code)</label>
+                <select id="siteCodeSelect" data-default-site-code="__SITE_CODE__" data-supported-site-codes="__SUPPORTED_SITE_CODES__" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
+                  __SITE_CODE_OPTIONS__
+                </select>
+              </div>
+
+              <div class="mt-4">
+                <label for="localeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.processLocaleLabel">Process language (locale)</label>
+                <select id="localeSelect" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20" data-default-locale="en_US">
+                  <option value="en_US" selected data-locale-option="en_US">English (en_US)</option>
+                  <option value="de_DE" data-locale-option="de_DE">German (de_DE)</option>
+                </select>
               </div>
             </div>
 
+            <p class="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg" data-i18n="start.optionsIntro">
+              You have three options to start the process:
+            </p>
+
             <div class="grid gap-4 lg:grid-cols-3">
               <button id="startDeeplink" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
-                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">Deeplink</span>
-                <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Signed URL</h2>
-                <p class="mt-3 text-sm leading-6 text-slate-600">
-                   Creates a Deeplink URL.
+                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">#1</span>
+                <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950" data-i18n="start.cards.deeplink.title">Deeplink</h2>
+                <p class="mt-3 text-sm leading-6 text-slate-600" data-i18n="start.cards.deeplink.description">
+                  Creates a signed URL.
                 </p>
-                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue</span>
+                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition" data-i18n="start.cards.deeplink.cta">Continue</span>
               </button>
 
               <button id="startDeeplinkIframe" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
-                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">iFrame</span>
-                <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">Embedded Flow</h2>
-                <p class="mt-3 text-sm leading-6 text-slate-600">
-                   Deeplink inside an iFrame.
+                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">#2</span>
+                <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950" data-i18n="start.cards.iframe.title">iFrame</h2>
+                <p class="mt-3 text-sm leading-6 text-slate-600" data-i18n="start.cards.iframe.description">
+                  Deeplink inside an iFrame.
                 </p>
-                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue</span>
+                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition" data-i18n="start.cards.iframe.cta">Continue</span>
               </button>
 
               <button id="startApi" type="button" class="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-brand hover:shadow-soft">
-                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">API</span>
-                <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">POST /invitation</h2>
-                <p class="mt-3 text-sm leading-6 text-slate-600">
-                   Creates an invitation.
+                <span class="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white">#3</span>
+                <h2 class="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950" data-i18n="start.cards.api.title">POST /invitation</h2>
+                <p class="mt-3 text-sm leading-6 text-slate-600" data-i18n="start.cards.api.description">
+                  API call.
                 </p>
-                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Continue</span>
+                <span class="btn-primary mt-6 inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition" data-i18n="start.cards.api.cta">Continue</span>
               </button>
             </div>
           </section>
 
           <section id="screen-link" data-screen class="hidden space-y-7">
             <div class="space-y-4">
-              <p class="text-sm font-medium tracking-[0.2em] text-brand">Step 2</p>
-              <div class="flex flex-wrap items-center gap-3">
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-slate-600">
-                  customer_no <span id="linkCustomerNo" class="ml-2 text-slate-950"></span>
-                </span>
-              </div>
               <h2 id="linkTitle" class="text-3xl font-semibold tracking-[-0.04em] text-slate-950"></h2>
               <p id="linkDescription" class="max-w-2xl text-base leading-7 text-slate-600"></p>
             </div>
 
-            <div id="linkScreenGrid" class="grid gap-6 lg:grid-cols-[300px_1fr]">
-              <div id="linkSidebarPanel" class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                <div class="mx-auto flex h-[240px] w-[240px] items-center justify-center rounded-3xl bg-white p-4 shadow-sm">
-                  <canvas id="qrCanvas" width="240" height="240"></canvas>
-                </div>
-                <p class="mt-4 text-center text-xs leading-5 text-slate-500">
-                  Scan on another device, or use the generated link in the selected flow.
-                </p>
-                <div id="qrLinkPanel" class="mt-4 hidden rounded-3xl border border-slate-200 bg-white p-4">
-                  <p class="text-xs font-semibold tracking-[0.18em] text-slate-500">Generated link</p>
-                  <p id="qrLinkValue" class="mt-2 break-all text-sm leading-6 text-slate-700"></p>
-                </div>
-              </div>
-
+            <div class="grid gap-6">
               <div id="linkMainPanel" class="space-y-5 rounded-3xl border border-slate-200 bg-white p-5">
-                <div id="linkValuePanel">
-                  <p class="text-xs font-semibold tracking-[0.18em] text-slate-500">Generated link</p>
-                  <p id="linkValue" class="mt-2 break-all text-sm leading-6 text-slate-700"></p>
-                </div>
-
-                  <div id="linkIframePanel" class="hidden space-y-4">
-                    <div id="linkProcessStepPanel" class="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
-                      <p class="text-xs font-semibold tracking-[0.18em]">
-                        Process step: <span id="linkProcessStepValue" class="font-semibold">—</span>
-                      </p>
-                    </div>
-                    <button id="checkPhotoNowIframe" type="button" class="hidden btn-secondary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
-                      Check for Photo
-                    </button>
-                    <iframe id="linkIframe" title="Photo Collect embedded deeplink" src="about:blank" class="link-iframe block w-full rounded-3xl border border-slate-200 bg-white"></iframe>
+                <div id="linkIframePanel" class="hidden space-y-4">
+                  <div id="linkProcessStepPanel" class="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+                    <p class="text-xs font-semibold tracking-[0.18em]">
+                      <span data-i18n="link.processStepLabel">Process step:</span>
+                      <span id="linkProcessStepValue" class="font-semibold">-</span>
+                    </p>
                   </div>
-
-                <div id="linkActionRow" class="flex flex-wrap gap-3">
-                  <a id="openLinkButton" href="#" class="btn-primary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
-                    Open Link
-                  </a>
-                  <button id="checkPhotoNow" type="button" class="btn-secondary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
+                  <button id="checkPhotoNowIframe" type="button" class="hidden btn-secondary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
                     Check for Photo
                   </button>
+                  <iframe id="linkIframe" title="Photo Collect embedded Deeplink" src="about:blank" class="link-iframe block w-full rounded-3xl border border-slate-200 bg-white" data-i18n-attr="title:link.iframeTitle"></iframe>
                 </div>
 
-                <p id="linkUploadHint" class="text-sm leading-6 text-slate-500">
-                  Use "Check for Photo" after the upload completes.
-                </p>
+                <div id="linkActionRow" class="flex flex-wrap gap-3">
+                  <a id="openLinkButton" href="#" class="btn-primary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Open Link</a>
+                  <button id="checkPhotoNow" type="button" class="btn-secondary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">Check for Photo</button>
+                </div>
+
+                <div id="linkValuePanel">
+                  <p class="text-xs font-semibold tracking-[0.18em] text-slate-500" data-i18n="common.generatedLink">Generated link</p>
+                  <p id="linkValue" class="mt-2 break-all text-sm leading-6 text-slate-700"></p>
+                </div>
 
               </div>
             </div>
@@ -159,42 +144,36 @@
           <section id="screen-result" data-screen class="hidden space-y-7">
             <div class="space-y-4">
               <div class="space-y-4">
-                <p class="text-sm font-medium tracking-[0.2em] text-brand">Step 3</p>
                 <div class="flex flex-wrap items-center gap-3">
-                  <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-slate-600">
-                    customer_no <span id="resultCustomerNo" class="ml-2 text-slate-950"></span>
-                  </span>
                   <span id="resultStatusBadge" class="inline-flex items-center rounded-full bg-amber-100 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-amber-700">Waiting</span>
                 </div>
               </div>
-              <h2 class="text-3xl font-semibold tracking-[-0.04em] text-slate-950">Fetch the exported photo</h2>
-              <p id="resultStatusText" class="max-w-2xl text-base leading-7 text-slate-600">
-                The app polls GET /export until a file is ready.
+              <h2 class="text-3xl font-semibold tracking-[-0.04em] text-slate-950" data-i18n="result.title">Get the processed data</h2>
+              <p id="resultStatusText" class="max-w-2xl text-base leading-7 text-slate-600" data-i18n="result.status.waitingIntro">
+                The app polls GET /export until data is ready.
               </p>
             </div>
 
             <div class="space-y-5 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <div id="resultPlaceholder" class="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/90 p-8 text-center text-sm leading-6 text-slate-500">
-                Waiting for the exported image...
+              <div id="resultPlaceholder" class="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/90 p-8 text-center text-sm leading-6 text-slate-500" data-i18n="result.placeholder.waitingProcessedData">
+                Waiting for processed data...
               </div>
               <div id="resultGallery" class="hidden grid gap-4 lg:grid-cols-2">
                 <div class="rounded-3xl border border-slate-200 bg-white p-3">
-                  <p class="mb-2 text-xs font-semibold tracking-[0.18em] text-slate-500">Exported Photo</p>
-                  <img id="resultImage" alt="Exported Photo" class="hidden w-full rounded-2xl border border-slate-200 object-contain shadow-sm">
+                  <img id="resultImage" alt="Exported photo" class="hidden w-full rounded-2xl border border-slate-200 object-contain shadow-sm" data-i18n-attr="alt:result.imageAlt">
                 </div>
                 <div id="resultSignaturePanel" class="hidden rounded-3xl border border-slate-200 bg-white p-3">
-                  <p class="mb-2 text-xs font-semibold tracking-[0.18em] text-slate-500">Signature</p>
-                  <img id="resultSignatureImage" alt="Signature" class="w-full rounded-2xl border border-slate-200 object-contain shadow-sm">
+                  <img id="resultSignatureImage" alt="Exported signature" class="w-full rounded-2xl border border-slate-200 object-contain shadow-sm" data-i18n-attr="alt:result.signatureAlt">
                 </div>
               </div>
 
               <div id="resultMeta" class="hidden rounded-3xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600"></div>
 
               <div class="flex flex-wrap gap-3">
-                <button id="retryFetch" type="button" class="btn-secondary hidden inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
+                <button id="retryFetch" type="button" class="btn-secondary hidden inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition" data-i18n="result.buttons.retry">
                   Retry
                 </button>
-                <button type="button" data-close-result class="btn-primary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition">
+                <button type="button" data-close-result class="btn-primary inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold transition" data-i18n="result.buttons.close">
                   Close
                 </button>
               </div>
@@ -209,14 +188,14 @@
           target="_blank"
           rel="noreferrer"
           class="font-semibold text-brand underline decoration-brand/50 underline-offset-4 transition hover:text-slate-900 hover:decoration-slate-900"
+          data-i18n="footer.github"
         >
-          GitHub repo
+          Get the source code on GitHub
         </a>
       </footer>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script src="assets/app.js"></script>
 </body>
 </html>
