@@ -54,26 +54,22 @@
       "pending": "Pending",
       "finalize": "Finalize"
     },
-    "buttons": {
-      "openLink": "Open Link",
-      "checkForPhoto": "Check for Photo"
-    },
     "iframeTitle": "Photo Collect embedded Deeplink",
     "flows": {
       "deeplink": {
         "title": "Open the Deeplink",
         "description": "The Deeplink is created on the proxy without an API call. Use the generated link to start the process.",
-        "button": "Open Link"
+        "button": "Continue"
       },
       "iframe": {
         "title": "Use the Deeplink inside the iFrame",
         "description": "The Deeplink is created on the proxy without an API call. Use the generated link as the iFrame href. Event messages from the iFrame transmit the process status and iFrame height to the parent window.",
-        "button": "Open Link"
+        "button": "Continue"
       },
       "api": {
         "title": "Open the invitation link",
         "description": "This link comes from POST /invitation. The process created a pending invitation on Photo Collect.",
-        "button": "Open Link"
+        "button": "Continue"
       }
     }
   },
