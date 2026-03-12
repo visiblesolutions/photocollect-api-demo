@@ -48,9 +48,9 @@ final class PhotoCollectClient
             'site_code' => $siteCode,
         ];
 
-        $redirectUri = trim((string) $redirectUri);
-        if ($redirectUri !== '') {
-            $signedParameters['redirect_uri'] = $redirectUri;
+
+        if (!is_null($redirectUri)) { //empty string = disable default redirect
+            $signedParameters['redirect_uri'] = trim($redirectUri);
         }
 
         $signedParameters['salt'] = (string) time();
