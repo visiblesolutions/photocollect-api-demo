@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "title": "Photo Collect API Demo"
+  },
+  "common": {
+    "customerNo": "customer_no",
+    "generatedLink": "Generated link",
+    "notAvailable": "n/a",
+    "notSet": "-"
+  },
+  "navigation": {
+    "backToStart": "Back to start"
+  },
+  "header": {
+    "websiteLanguage": "Language"
+  },
+  "start": {
+    "title": "Integration Demo",
+    "description": "Photo Collect can be integrated into any IT infrastructure.",
+    "customerNoLabel": "Identifier (customer_no)",
+    "regenerate": "Regenerate",
+    "flowTypeLabel": "Flow type (site_code)",
+    "processLocaleLabel": "Process language (locale)",
+    "processLocaleOptions": {
+      "en_US": "English (en_US)",
+      "de_DE": "German (de_DE)"
+    },
+    "optionsIntro": "You have three options to start the process:",
+    "cards": {
+      "deeplink": {
+        "title": "Deeplink",
+        "description": "Creates a signed URL.",
+        "cta": "Continue"
+      },
+      "iframe": {
+        "title": "iFrame",
+        "description": "Deeplink inside an iFrame.",
+        "cta": "Continue"
+      },
+      "api": {
+        "title": "POST /invitation",
+        "description": "API call.",
+        "cta": "Continue"
+      }
+    }
+  },
+  "siteCodes": {
+    "api-demo": "Photo Flow",
+    "api-demo-signature": "Photo & Signature Flow"
+  },
+  "link": {
+    "processStepLabel": "Process step:",
+    "processSteps": {
+      "pending": "Pending",
+      "finalize": "Finalize"
+    },
+    "buttons": {
+      "openLink": "Open Link",
+      "checkForPhoto": "Check for Photo"
+    },
+    "iframeTitle": "Photo Collect embedded Deeplink",
+    "flows": {
+      "deeplink": {
+        "title": "Open the Deeplink",
+        "description": "The Deeplink is created on the proxy without an API call. Use the generated link to start the process.",
+        "button": "Open Link"
+      },
+      "iframe": {
+        "title": "Use the Deeplink inside the iFrame",
+        "description": "The Deeplink is created on the proxy without an API call. Use the generated link as the iFrame href. Event messages from the iFrame transmit the process status and iFrame height to the parent window.",
+        "button": "Open Link"
+      },
+      "api": {
+        "title": "Open the invitation link",
+        "description": "This link comes from POST /invitation. The process created a pending invitation on Photo Collect.",
+        "button": "Open Link"
+      }
+    }
+  },
+  "result": {
+    "title": "Get the processed data",
+    "buttons": {
+      "retry": "Retry",
+      "close": "Close"
+    },
+    "badges": {
+      "waiting": "Waiting",
+      "stillWaiting": "Still waiting",
+      "ready": "Ready",
+      "error": "Error"
+    },
+    "status": {
+      "waitingIntro": "The app polls GET /export until data is ready.",
+      "waitingProxy": "The app polls GET /export through the local proxy until a file is ready.",
+      "notReady": "The export is not ready yet. The app will keep polling for a short time.",
+      "retryLater": "No exported file was found yet.",
+      "ready": "The result is shown below.",
+      "error": "The export check failed."
+    },
+    "placeholder": {
+      "waitingProcessedData": "Waiting for data...",
+      "noPhotoAttempt": "No data yet. Poll attempt {attempt} of {maxAttempts}..."
+    },
+    "meta": {
+      "locale": "locale",
+      "siteCode": "site_code",
+      "file": "File",
+      "uploaded": "Uploaded",
+      "exported": "Exported",
+      "invitation": "Invitation",
+      "signature": "Signature",
+      "signatureIncluded": "Included",
+      "signatureNotRequested": "Not requested"
+    },
+    "imageAlt": "Exported photo",
+    "signatureAlt": "Exported signature"
+  },
+  "errors": {
+    "requestFailed": "Request failed.",
+    "unknownFlow": "Unknown flow selected."
+  },
+  "footer": {
+    "github": "Get the source code on GitHub"
+  }
+}
