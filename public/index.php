@@ -51,8 +51,9 @@ if ($defaultSiteCode === null) {
 $siteCodeOptions = '';
 foreach ($availableSiteCodes as $siteCode => $siteCodeLabel) {
     $siteCodeOptions .= sprintf(
-        '                <option value="%s"%s>%s</option>' . PHP_EOL,
+        '                <option value="%s" data-default-label="%s"%s>%s</option>' . PHP_EOL,
         htmlspecialchars((string) $siteCode, ENT_QUOTES, 'UTF-8'),
+        htmlspecialchars((string) $siteCodeLabel, ENT_QUOTES, 'UTF-8'),
         $siteCode === $defaultSiteCode ? ' selected' : '',
         htmlspecialchars((string) $siteCodeLabel, ENT_QUOTES, 'UTF-8'),
     );
