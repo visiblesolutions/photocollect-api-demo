@@ -13,16 +13,22 @@ const appLanguageButtons = document.querySelectorAll("[data-ui-language]");
 const linkTitle = document.getElementById("linkTitle");
 const linkDescription = document.getElementById("linkDescription");
 const linkMainPanel = document.getElementById("linkMainPanel");
-const linkValuePanel = document.getElementById("linkValuePanel");
-const linkValue = document.getElementById("linkValue");
 const linkIframePanel = document.getElementById("linkIframePanel");
+const linkIframeStage = document.getElementById("linkIframeStage");
 const linkIframe = document.getElementById("linkIframe");
+const linkInlineResult = document.getElementById("linkInlineResult");
+const linkInlinePlaceholder = document.getElementById("linkInlinePlaceholder");
+const linkInlineGallery = document.getElementById("linkInlineGallery");
+const linkInlineImage = document.getElementById("linkInlineImage");
+const linkInlineSignaturePanel = document.getElementById("linkInlineSignaturePanel");
+const linkInlineSignatureImage = document.getElementById("linkInlineSignatureImage");
+const linkInlineRetryButton = document.getElementById("linkInlineRetry");
 const linkProcessStepPanel = document.getElementById("linkProcessStepPanel");
 const linkProcessStepValue = document.getElementById("linkProcessStepValue");
 const openLinkButton = document.getElementById("openLinkButton");
 const linkActionRow = document.getElementById("linkActionRow");
-const checkPhotoNowIframeButton = document.getElementById("checkPhotoNowIframe");
-const checkPhotoNowButton = document.getElementById("checkPhotoNow");
+const generatedLinkPanel = document.getElementById("generatedLinkPanel");
+const generatedLinkText = document.getElementById("generatedLinkText");
 const linkUploadHint = document.getElementById("linkUploadHint");
 const resultStatusBadge = document.getElementById("resultStatusBadge");
 const resultStatusText = document.getElementById("resultStatusText");
@@ -173,9 +179,14 @@ const state = {
   pollHandle: null,
   pollAttempts: 0,
   maxPollAttempts: 15,
+  exportFetchInFlight: false,
+  inlineRevealHandle: null,
+  inlineRevealPending: false,
   resultState: null,
   resultPlaceholderState: null,
-  lastExportPayload: null
+  lastExportPayload: null,
+  inlineExportVisible: false,
+  inlinePlaceholderState: null
 };
 
 function appBaseUrl() {
@@ -245,6 +256,13 @@ function clearPolling() {
   if (state.pollHandle) {
     window.clearTimeout(state.pollHandle);
     state.pollHandle = null;
+  }
+}
+
+function clearInlineRevealDelay() {
+  if (state.inlineRevealHandle) {
+    window.clearTimeout(state.inlineRevealHandle);
+    state.inlineRevealHandle = null;
   }
 }
 
@@ -323,28 +341,148 @@ function setRawResultPlaceholder(text) {
   resultPlaceholder.textContent = state.resultPlaceholderState.rawText;
 }
 
+function setInlineResultPlaceholder(key, params = {}) {
+  state.inlinePlaceholderState = { key, params };
+
+  if (!linkInlinePlaceholder) {
+    return;
+  }
+
+  linkInlinePlaceholder.textContent = t(key, params, linkInlinePlaceholder.textContent || "");
+}
+
+function setRawInlineResultPlaceholder(text) {
+  state.inlinePlaceholderState = { rawText: String(text || "") };
+
+  if (!linkInlinePlaceholder) {
+    return;
+  }
+
+  linkInlinePlaceholder.textContent = state.inlinePlaceholderState.rawText;
+}
+
+function getResultMediaView() {
+  return {
+    placeholder: resultPlaceholder,
+    gallery: resultGallery,
+    image: resultImage,
+    signaturePanel: resultSignaturePanel,
+    signatureImage: resultSignatureImage
+  };
+}
+
+function getInlineMediaView() {
+  return {
+    placeholder: linkInlinePlaceholder,
+    gallery: linkInlineGallery,
+    image: linkInlineImage,
+    signaturePanel: linkInlineSignaturePanel,
+    signatureImage: linkInlineSignatureImage
+  };
+}
+
+function resetMediaView(view) {
+  if (!view) {
+    return;
+  }
+
+  view.gallery.classList.add("hidden");
+  view.image.classList.add("hidden");
+  view.image.src = "";
+  view.signaturePanel.classList.add("hidden");
+  view.signatureImage.classList.add("hidden");
+  view.signatureImage.src = "";
+  view.placeholder.classList.remove("hidden");
+}
+
+function renderMediaView(file, view) {
+  if (!view) {
+    return;
+  }
+
+  const exportFile = typeof file.file === "object" && file.file !== null ? file.file : {};
+  const signatureContent = typeof exportFile.signature_content === "string" ? exportFile.signature_content.trim() : "";
+  const signatureType = typeof exportFile.signature_type === "string" ? exportFile.signature_type.trim() : "";
+  const hasSignature = signatureContent !== "";
+  const signatureSource = signatureContent.startsWith("data:")
+    ? signatureContent
+    : `data:${signatureType};base64,${signatureContent}`;
+
+  view.gallery.classList.remove("hidden");
+  view.image.src = file.image_url || "";
+  view.image.classList.remove("hidden");
+  view.placeholder.classList.add("hidden");
+
+  if (hasSignature) {
+    view.signaturePanel.classList.remove("hidden");
+    view.signatureImage.classList.remove("hidden");
+    view.signatureImage.src = signatureSource;
+    return {
+      exportFile,
+      hasSignature: true
+    };
+  }
+
+  view.signaturePanel.classList.add("hidden");
+  view.signatureImage.src = "";
+  view.signatureImage.classList.add("hidden");
+
+  return {
+    exportFile,
+    hasSignature: false
+  };
+}
+
+function syncIframePanelContentVisibility(showIframe = !linkIframePanel.classList.contains("hidden")) {
+  const showInlineResult = showIframe && state.inlineExportVisible;
+
+  if (linkIframeStage) {
+    linkIframeStage.classList.toggle("is-collapsed", !showIframe || showInlineResult);
+  }
+
+  if (linkInlineResult) {
+    linkInlineResult.classList.toggle("is-collapsed", !showInlineResult);
+  }
+
+  if (!linkIframe) {
+    return;
+  }
+
+  if (!showIframe) {
+    clearIframeHeightFrame();
+    lastIframeHeight = 0;
+    linkIframe.style.height = "";
+    linkIframe.src = "about:blank";
+    return;
+  }
+
+  if (showInlineResult) {
+    clearIframeHeightFrame();
+    return;
+  }
+
+  applyIframeHeight(IFRAME_MIN_HEIGHT);
+  linkIframe.src = state.linkUrl || "about:blank";
+}
+
 function resetGeneratedState() {
   clearPolling();
+  clearInlineRevealDelay();
   state.flow = "";
   state.linkUrl = "";
   state.processStep = "";
   state.pollAttempts = 0;
+  state.exportFetchInFlight = false;
+  state.inlineRevealPending = false;
   state.resultState = null;
   state.resultPlaceholderState = null;
   state.lastExportPayload = null;
+  state.inlineExportVisible = false;
+  state.inlinePlaceholderState = null;
   openLinkButton.href = "#";
-  openLinkButton.textContent = t("link.buttons.openLink", {}, "Open Link");
+  openLinkButton.textContent = "Continue";
   openLinkButton.classList.remove("hidden");
-  linkValuePanel.classList.remove("hidden");
   linkIframePanel.classList.add("hidden");
-  if (checkPhotoNowButton) {
-    checkPhotoNowButton.textContent = t("link.buttons.checkForPhoto", {}, "Check for Photo");
-    checkPhotoNowButton.classList.remove("hidden");
-  }
-  if (checkPhotoNowIframeButton) {
-    checkPhotoNowIframeButton.textContent = t("link.buttons.checkForPhoto", {}, "Check for Photo");
-    checkPhotoNowIframeButton.classList.add("hidden");
-  }
   if (linkUploadHint) {
     linkUploadHint.classList.remove("hidden");
   }
@@ -352,18 +490,18 @@ function resetGeneratedState() {
     linkIframe.style.height = "";
   }
   lastIframeHeight = 0;
-  linkIframe.src = "about:blank";
-  linkValue.textContent = "";
-  resultGallery.classList.add("hidden");
-  resultImage.src = "";
-  resultImage.classList.add("hidden");
-  resultSignatureImage.src = "";
-  resultSignaturePanel.classList.add("hidden");
+  syncIframePanelContentVisibility(false);
+  resetMediaView(getResultMediaView());
+  resetMediaView(getInlineMediaView());
   resultMeta.innerHTML = "";
   resultMeta.classList.add("hidden");
   retryFetchButton.classList.add("hidden");
+  if (linkInlineRetryButton) {
+    linkInlineRetryButton.classList.add("hidden");
+  }
   resultPlaceholder.classList.remove("hidden");
   setResultPlaceholder("result.placeholder.waitingProcessedData");
+  setInlineResultPlaceholder("result.placeholder.waitingProcessedData");
   setResultState("waiting", "result.badges.waiting", "result.status.waitingProxy");
 }
 
@@ -552,6 +690,20 @@ function refreshLinkScreenCopy() {
 
   if (state.flow === "deeplink-iframe") {
     showDeeplinkIframeFlowScreen();
+
+    if (state.inlineExportVisible && linkInlinePlaceholder) {
+      if (state.lastExportPayload) {
+        renderInlineResult(state.lastExportPayload);
+      } else if (state.inlinePlaceholderState) {
+        const { key, params, rawText } = state.inlinePlaceholderState;
+        if (typeof rawText === "string") {
+          linkInlinePlaceholder.textContent = rawText;
+        } else {
+          setInlineResultPlaceholder(key, params);
+        }
+      }
+    }
+
     return;
   }
 
@@ -613,11 +765,8 @@ function applyProcessStepStatus(step) {
     isFinalize ? "border-blue-200 bg-blue-50 text-blue-700" : "border-amber-200 bg-amber-50 text-amber-700"
   ].join(" ");
 
-  if (checkPhotoNowIframeButton) {
-    checkPhotoNowIframeButton.classList.toggle(
-      "hidden",
-      state.flow !== "deeplink-iframe" || !isFinalize
-    );
+  if (state.flow === "deeplink-iframe" && isFinalize) {
+    beginInlineFinalizeFetch();
   }
 }
 
@@ -741,41 +890,22 @@ function setLinkScreen(copy) {
     showIframe,
     showOpenButton,
     showUploadHint,
-    showCheckPhotoNow
+    showGeneratedLink
   } = {
     showIframe: false,
     showOpenButton: true,
+    showGeneratedLink: false,
     showUploadHint: true,
-    showCheckPhotoNow: true,
-    buttonLabelKey: "link.buttons.openLink",
     ...copy
   };
 
   linkTitle.textContent = t(titleKey, {}, linkTitle.textContent || "");
   linkDescription.textContent = t(descriptionKey, {}, linkDescription.textContent || "");
-  linkValue.textContent = state.linkUrl;
-  openLinkButton.textContent = t(buttonLabelKey, {}, openLinkButton.textContent || "Open Link");
-  if (checkPhotoNowButton) {
-    checkPhotoNowButton.textContent = t("link.buttons.checkForPhoto", {}, checkPhotoNowButton.textContent || "Check for Photo");
-  }
-  if (checkPhotoNowIframeButton) {
-    checkPhotoNowIframeButton.textContent = t("link.buttons.checkForPhoto", {}, checkPhotoNowIframeButton.textContent || "Check for Photo");
-  }
+  openLinkButton.textContent = t(buttonLabelKey, {}, openLinkButton.textContent || "Continue");
   openLinkButton.href = state.linkUrl;
-  linkValuePanel.classList.toggle("hidden", showIframe);
   linkIframePanel.classList.toggle("hidden", !showIframe);
-  if (!showIframe) {
-    linkIframe.style.height = "";
-    lastIframeHeight = 0;
-  } else {
-    applyIframeHeight(IFRAME_MIN_HEIGHT);
-  }
-  linkIframe.src = showIframe ? state.linkUrl : "about:blank";
+  syncIframePanelContentVisibility(showIframe);
   openLinkButton.classList.toggle("hidden", !showOpenButton);
-  checkPhotoNowButton.classList.toggle("hidden", !showCheckPhotoNow);
-  if (checkPhotoNowIframeButton) {
-    checkPhotoNowIframeButton.classList.add("hidden");
-  }
   if (linkUploadHint) {
     linkUploadHint.classList.toggle("hidden", !showUploadHint);
   }
@@ -789,10 +919,16 @@ function setLinkScreen(copy) {
   if (linkActionRow) {
     linkActionRow.classList.toggle("hidden", showIframe);
   }
+  if (generatedLinkPanel && generatedLinkText) {
+    generatedLinkText.textContent = state.linkUrl || "";
+    generatedLinkPanel.classList.toggle("hidden", !showGeneratedLink || !state.linkUrl);
+  }
   linkProcessStepPanel.classList.toggle("hidden", !showIframe);
   if (showIframe) {
     applyProcessStepStatus(state.processStep || "pending");
-    scheduleIframeContentHeightMeasure();
+    if (!state.inlineExportVisible) {
+      scheduleIframeContentHeightMeasure();
+    }
   }
   showScreen("link");
 }
@@ -803,7 +939,8 @@ function showDeeplinkFlowScreen() {
     descriptionKey: "link.flows.deeplink.description",
     buttonLabelKey: "link.flows.deeplink.button",
     showIframe: false,
-    showOpenButton: true
+    showOpenButton: true,
+    showGeneratedLink: true
   });
 }
 
@@ -814,8 +951,7 @@ function showDeeplinkIframeFlowScreen() {
     buttonLabelKey: "link.flows.iframe.button",
     showIframe: true,
     showOpenButton: false,
-    showUploadHint: false,
-    showCheckPhotoNow: false
+    showUploadHint: false
   });
 }
 
@@ -825,7 +961,8 @@ function showApiFlowScreen() {
     descriptionKey: "link.flows.api.description",
     buttonLabelKey: "link.flows.api.button",
     showIframe: false,
-    showOpenButton: true
+    showOpenButton: true,
+    showGeneratedLink: true
   });
 }
 
@@ -895,7 +1032,7 @@ async function startFlow(flow) {
           customer_no: state.customerNo,
           site_code: state.siteCode,
           locale: state.locale,
-          redirect_uri: buildRedirectUrl()
+          redirect_uri: buildRedirectUrl() //Redirect back
         })
       });
 
@@ -911,7 +1048,7 @@ async function startFlow(flow) {
           customer_no: state.customerNo,
           site_code: state.siteCode,
           locale: state.locale,
-          redirect_uri: ""
+          redirect_uri: "" //Don't redirect - empty string disabled preconfigured default redirectUri
         })
       });
 
@@ -948,32 +1085,11 @@ function renderResult(file) {
   state.lastExportPayload = file;
   state.resultPlaceholderState = null;
 
-  const exportFile = typeof file.file === "object" && file.file !== null ? file.file : {};
-  const signatureContent = typeof exportFile.signature_content === "string" ? exportFile.signature_content.trim() : "";
-  const signatureType = typeof exportFile.signature_type === "string" ? exportFile.signature_type.trim() : "";
-  const hasSignature = signatureContent !== "";
-  const signatureSource = signatureContent.startsWith("data:")
-    ? signatureContent
-    : `data:${signatureType};base64,${signatureContent}`;
+  const { exportFile, hasSignature } = renderMediaView(file, getResultMediaView());
   const notAvailable = t("common.notAvailable", {}, "n/a");
   const signatureKey = hasSignature
     ? "result.meta.signatureIncluded"
     : "result.meta.signatureNotRequested";
-
-  resultGallery.classList.remove("hidden");
-  resultImage.src = file.image_url || "";
-  resultImage.classList.remove("hidden");
-  resultPlaceholder.classList.add("hidden");
-
-  if (hasSignature) {
-    resultSignaturePanel.classList.remove("hidden");
-    resultSignatureImage.classList.remove("hidden");
-    resultSignatureImage.src = signatureSource;
-  } else {
-    resultSignaturePanel.classList.add("hidden");
-    resultSignatureImage.src = "";
-    resultSignatureImage.classList.add("hidden");
-  }
 
   resultMeta.classList.remove("hidden");
   resultMeta.innerHTML = [
@@ -989,10 +1105,81 @@ function renderResult(file) {
   setResultState("ready", "result.badges.ready", "result.status.ready");
 }
 
-async function pollForPhoto() {
+function renderInlineResult(file) {
+  state.lastExportPayload = file;
+  state.inlinePlaceholderState = null;
+
+  if (!state.inlineExportVisible) {
+    return;
+  }
+
+  renderMediaView(file, getInlineMediaView());
+  if (linkInlineRetryButton) {
+    linkInlineRetryButton.classList.add("hidden");
+  }
+  syncIframePanelContentVisibility(true);
+}
+
+function revealInlineResultPanel() {
+  state.inlineRevealPending = false;
+  state.inlineExportVisible = true;
+
+  if (state.lastExportPayload) {
+    renderMediaView(state.lastExportPayload, getInlineMediaView());
+  } else {
+    resetMediaView(getInlineMediaView());
+
+    if (state.inlinePlaceholderState) {
+      const { key, params, rawText } = state.inlinePlaceholderState;
+      if (typeof rawText === "string") {
+        linkInlinePlaceholder.textContent = rawText;
+      } else {
+        setInlineResultPlaceholder(key, params);
+      }
+    } else {
+      setInlineResultPlaceholder("result.placeholder.waitingProcessedData");
+    }
+  }
+
+  syncIframePanelContentVisibility(true);
+}
+
+function beginInlineFinalizeFetch() {
+  if (state.inlineRevealPending || state.inlineExportVisible) {
+    return;
+  }
+
+  clearPolling();
+  clearInlineRevealDelay();
+  state.pollAttempts = 0;
+  state.lastExportPayload = null;
+  state.inlineRevealPending = true;
+  state.inlineExportVisible = false;
+  state.inlinePlaceholderState = null;
+  if (linkInlineRetryButton) {
+    linkInlineRetryButton.classList.add("hidden");
+  }
+  setInlineResultPlaceholder("result.placeholder.waitingProcessedData");
+  state.inlineRevealHandle = window.setTimeout(() => {
+    state.inlineRevealHandle = null;
+    revealInlineResultPanel();
+  }, 3000);
+  pollForPhoto("inline");
+}
+
+async function pollForPhoto(target = "screen") {
   clearPolling();
   state.pollAttempts += 1;
-  retryFetchButton.classList.add("hidden");
+  state.exportFetchInFlight = true;
+  const isInlineTarget = target === "inline";
+
+  if (isInlineTarget) {
+    if (linkInlineRetryButton) {
+      linkInlineRetryButton.classList.add("hidden");
+    }
+  } else {
+    retryFetchButton.classList.add("hidden");
+  }
 
   try {
     const exportParams = new URLSearchParams();
@@ -1001,52 +1188,81 @@ async function pollForPhoto() {
     const payload = await requestJson(`api/export?${exportParams.toString()}`);
 
     if (payload.status === "ready") {
-      renderResult(payload);
+      if (isInlineTarget) {
+        renderInlineResult(payload);
+      } else {
+        renderResult(payload);
+      }
       return;
     }
 
     state.lastExportPayload = null;
-    resultPlaceholder.classList.remove("hidden");
-    setResultPlaceholder("result.placeholder.noPhotoAttempt", {
+    const placeholderParams = {
       attempt: state.pollAttempts,
       maxAttempts: state.maxPollAttempts
-    });
-    setResultState("waiting", "result.badges.waiting", "result.status.notReady");
+    };
+
+    if (isInlineTarget) {
+      resetMediaView(getInlineMediaView());
+      setInlineResultPlaceholder("result.placeholder.noPhotoAttempt", placeholderParams);
+    } else {
+      resultPlaceholder.classList.remove("hidden");
+      setResultPlaceholder("result.placeholder.noPhotoAttempt", placeholderParams);
+      setResultState("waiting", "result.badges.waiting", "result.status.notReady");
+    }
 
     if (state.pollAttempts < state.maxPollAttempts) {
-      state.pollHandle = window.setTimeout(pollForPhoto, 4000);
+      state.pollHandle = window.setTimeout(() => {
+        pollForPhoto(target);
+      }, 4000);
       return;
     }
 
-    retryFetchButton.classList.remove("hidden");
-    setResultState("waiting", "result.badges.stillWaiting", "result.status.retryLater");
+    if (isInlineTarget) {
+      if (linkInlineRetryButton) {
+        linkInlineRetryButton.classList.remove("hidden");
+      }
+    } else {
+      retryFetchButton.classList.remove("hidden");
+      setResultState("waiting", "result.badges.stillWaiting", "result.status.retryLater");
+    }
   } catch (error) {
     state.lastExportPayload = null;
-    retryFetchButton.classList.remove("hidden");
-    resultPlaceholder.classList.remove("hidden");
-    setRawResultPlaceholder(error.message);
-    setResultState("error", "result.badges.error", "result.status.error");
+    if (isInlineTarget) {
+      resetMediaView(getInlineMediaView());
+      if (linkInlineRetryButton) {
+        linkInlineRetryButton.classList.remove("hidden");
+      }
+      setRawInlineResultPlaceholder(error.message);
+    } else {
+      retryFetchButton.classList.remove("hidden");
+      resultPlaceholder.classList.remove("hidden");
+      setRawResultPlaceholder(error.message);
+      setResultState("error", "result.badges.error", "result.status.error");
+    }
+  } finally {
+    state.exportFetchInFlight = false;
   }
 }
 
 function openResultScreen() {
   clearPolling();
+  clearInlineRevealDelay();
   state.pollAttempts = 0;
+  state.inlineExportVisible = false;
+  state.inlineRevealPending = false;
+  state.inlinePlaceholderState = null;
   state.lastExportPayload = null;
   window.history.replaceState({}, "", buildRedirectUrl());
-  resultGallery.classList.add("hidden");
-  resultImage.classList.add("hidden");
-  resultImage.src = "";
-  resultSignaturePanel.classList.add("hidden");
-  resultSignatureImage.src = "";
-  resultSignatureImage.classList.add("hidden");
+  syncIframePanelContentVisibility(linkIframePanel && !linkIframePanel.classList.contains("hidden"));
+  resetMediaView(getResultMediaView());
   resultMeta.classList.add("hidden");
   resultMeta.innerHTML = "";
   resultPlaceholder.classList.remove("hidden");
   setResultPlaceholder("result.placeholder.waitingProcessedData");
   showScreen("result");
   setResultState("waiting", "result.badges.waiting", "result.status.waitingProxy");
-  pollForPhoto();
+  pollForPhoto("screen");
 }
 
 function bootstrapFromUrl() {
@@ -1150,13 +1366,15 @@ window.addEventListener("message", (event) => {
   }
 });
 
-checkPhotoNowButton.addEventListener("click", () => {
-  openResultScreen();
-});
-
-if (checkPhotoNowIframeButton) {
-  checkPhotoNowIframeButton.addEventListener("click", () => {
-    openResultScreen();
+if (linkInlineRetryButton) {
+  linkInlineRetryButton.addEventListener("click", () => {
+    clearPolling();
+    clearInlineRevealDelay();
+    state.pollAttempts = 0;
+    state.lastExportPayload = null;
+    state.inlineRevealPending = false;
+    revealInlineResultPanel();
+    pollForPhoto("inline");
   });
 }
 
