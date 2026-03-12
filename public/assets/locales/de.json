@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "title": "Photo Collect API Demo"
+  },
+  "common": {
+    "customerNo": "customer_no",
+    "generatedLink": "Generierter Link",
+    "notAvailable": "k. A.",
+    "notSet": "-"
+  },
+  "navigation": {
+    "backToStart": "Zur Startseite"
+  },
+  "header": {
+    "websiteLanguage": "Sprache"
+  },
+  "start": {
+    "title": "Integrationsdemo",
+    "description": "Photo Collect kann in jede IT-Infrastruktur integriert werden.",
+    "customerNoLabel": "Kennung (customer_no)",
+    "regenerate": "Neu generieren",
+    "flowTypeLabel": "Prozess-Typ (site_code)",
+    "processLocaleLabel": "Prozesssprache (locale)",
+    "processLocaleOptions": {
+      "en_US": "Englisch (en_US)",
+      "de_DE": "Deutsch (de_DE)"
+    },
+    "optionsIntro": "Es gibt drei Möglichkeiten, den Prozess zu starten:",
+    "cards": {
+      "deeplink": {
+        "title": "Deeplink",
+        "description": "Erstellt eine signierte URL.",
+        "cta": "Weiter"
+      },
+      "iframe": {
+        "title": "iFrame",
+        "description": "Deeplink in einem iFrame.",
+        "cta": "Weiter"
+      },
+      "api": {
+        "title": "POST /invitation",
+        "description": "API-Aufruf.",
+        "cta": "Weiter"
+      }
+    }
+  },
+  "siteCodes": {
+    "api-demo": "Foto-Prozess",
+    "api-demo-signature": "Foto- und Unterschrift-Prozess"
+  },
+  "link": {
+    "processStepLabel": "Prozessschritt:",
+    "processSteps": {
+      "pending": "Ausstehend",
+      "finalize": "Finalisiert"
+    },
+    "buttons": {
+      "openLink": "Link öffen",
+      "checkForPhoto": "Foto abrufen"
+    },
+    "iframeTitle": "Photo Collect Deeplink im iFrame",
+    "flows": {
+      "deeplink": {
+        "title": "Deeplink öffnen",
+        "description": "Der Deeplink wird ohne API-Aufruf auf dem Proxy erstellt. Verwenden Sie den generierten Link, um den Prozess zu starten.",
+        "button": "Link öffnen"
+      },
+      "iframe": {
+        "title": "Deeplink im iFrame",
+        "description": "Der Deeplink wird ohne API-Aufruf auf dem Proxy erstellt. Verwenden Sie den generierten Link im iFrame. Event-Nachrichten aus dem iFrame übermitteln den Prozessstatus und die iFrame-Höhe an das übergeordnete Fenster.",
+        "button": "Link öffnen"
+      },
+      "api": {
+        "title": "Link öffnen",
+        "description": "Der Link stammt von POST /invitation. Der Prozess hat eine ausstehende Einladung in Photo Collect erstellt.",
+        "button": "Link öffnen"
+      }
+    }
+  },
+  "result": {
+    "title": "Verarbeitete Daten abrufen",
+    "buttons": {
+      "retry": "Erneut versuchen",
+      "close": "Schliessen"
+    },
+    "badges": {
+      "waiting": "Warten",
+      "stillWaiting": "Weiterhin ausstehend",
+      "ready": "Bereit",
+      "error": "Fehler"
+    },
+    "status": {
+      "waitingIntro": "Die App fragt GET /export ab, bis Daten bereit sind.",
+      "waitingProxy": "Die App fragt GET /export über den lokalen Proxy ab, bis die Daten bereit sind.",
+      "notReady": "Der Export ist noch nicht bereit. Die App fragt weiter ab.",
+      "retryLater": "Es wurden noch keine exportierten Daten gefunden.",
+      "ready": "Das Ergebnis wird unten angezeigt.",
+      "error": "Die Exportprüfung ist fehlgeschlagen."
+    },
+    "placeholder": {
+      "waitingProcessedData": "Warte auf Daten...",
+      "noPhotoAttempt": "Noch keine Daten. Abfrageversuch {attempt} von {maxAttempts}..."
+    },
+    "meta": {
+      "locale": "locale",
+      "siteCode": "site_code",
+      "file": "Datei",
+      "uploaded": "Hochgeladen",
+      "exported": "Exportiert",
+      "invitation": "Invitation",
+      "signature": "Unterschrift",
+      "signatureIncluded": "Enthalten",
+      "signatureNotRequested": "Nicht angefordert"
+    },
+    "imageAlt": "Exportiertes Foto",
+    "signatureAlt": "Exportierte Unterschrift"
+  },
+  "errors": {
+    "requestFailed": "Anfrage fehlgeschlagen.",
+    "unknownFlow": "Unbekannter Prozess ausgewählt."
+  },
+  "footer": {
+    "github": "Quellcode auf GitHub ansehen"
+  }
+}
