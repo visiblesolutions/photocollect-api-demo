@@ -54,31 +54,27 @@
       "pending": "Ausstehend",
       "finalize": "Finalisiert"
     },
-    "buttons": {
-      "openLink": "Link öffen",
-      "checkForPhoto": "Foto abrufen"
-    },
     "iframeTitle": "Photo Collect Deeplink im iFrame",
     "flows": {
       "deeplink": {
         "title": "Deeplink öffnen",
         "description": "Der Deeplink wird ohne API-Aufruf auf dem Proxy erstellt. Verwenden Sie den generierten Link, um den Prozess zu starten.",
-        "button": "Link öffnen"
+        "button": "Weiter"
       },
       "iframe": {
         "title": "Deeplink im iFrame",
         "description": "Der Deeplink wird ohne API-Aufruf auf dem Proxy erstellt. Verwenden Sie den generierten Link im iFrame. Event-Nachrichten aus dem iFrame übermitteln den Prozessstatus und die iFrame-Höhe an das übergeordnete Fenster.",
-        "button": "Link öffnen"
+        "button": "Weiter"
       },
       "api": {
         "title": "Link öffnen",
         "description": "Der Link stammt von POST /invitation. Der Prozess hat eine ausstehende Einladung in Photo Collect erstellt.",
-        "button": "Link öffnen"
+        "button": "Weiter"
       }
     }
   },
   "result": {
-    "title": "Verarbeitete Daten abrufen",
+    "title": "Verarbeitete Daten",
     "buttons": {
       "retry": "Erneut versuchen",
       "close": "Schliessen"
