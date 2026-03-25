@@ -77,3 +77,21 @@ Supported child -> parent message types:
        "height": 980
      }
      ```
+   - Parent behavior:
+     - Applies the provided `height` to the embedded iFrame.
+
+3. `photo-collect:activity`
+   - Purpose: report user activity inside the deeplink iFrame to the parent window.
+   - Supported event values:
+     - `click`
+     - `focus`
+     - `keyup`
+   - Payload:
+     ```json
+     {
+       "type": "photo-collect:activity",
+       "value": "click"
+     }
+     ```
+   - Parent behavior:
+     - Appends the activity event to the iFrame activity log in the demo UI.
