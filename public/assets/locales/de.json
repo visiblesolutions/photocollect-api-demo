@@ -50,6 +50,7 @@
   },
   "link": {
     "processStepLabel": "Prozessschritt:",
+    "activityLabel": "iFrame Aktivität via event message",
     "processSteps": {
       "pending": "Ausstehend",
       "finalize": "Finalisiert"
