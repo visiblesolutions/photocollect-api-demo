@@ -22,6 +22,7 @@ export function collectElements(documentRef = document) {
     linkIframePanel: byId(documentRef, "linkIframePanel"),
     linkIframeStage: byId(documentRef, "linkIframeStage"),
     linkIframe: byId(documentRef, "linkIframe"),
+    linkIframeActivityLog: byId(documentRef, "linkIframeActivityLog"),
     linkInlineResult: byId(documentRef, "linkInlineResult"),
     linkInlinePlaceholder: byId(documentRef, "linkInlinePlaceholder"),
     linkInlineGallery: byId(documentRef, "linkInlineGallery"),
