@@ -242,6 +242,22 @@ export class PhotoCollectDemoApp {
     }
   }
 
+  getIframeActivityLogValue(message) {
+    if (!message || typeof message !== "object") {
+      return undefined;
+    }
+
+    if (typeof message.value !== "undefined") {
+      return message.value;
+    }
+
+    if (message.type === IFRAME_CONTENT_RESIZE_MESSAGE_TYPE) {
+      return this.getIframeContentHeightFromPayload(message);
+    }
+
+    return undefined;
+  }
+
   renderIframeActivityLog() {
     const { linkIframeActivityLog } = this.elements;
 
@@ -254,9 +270,10 @@ export class PhotoCollectDemoApp {
   }
 
   appendIframeActivityLog(message) {
+    const valueLabel = message?.type === IFRAME_CONTENT_RESIZE_MESSAGE_TYPE ? "height" : "value";
     const entry = [
       `type: ${this.formatActivityLogValue(message?.type)}`,
-      `value: ${this.formatActivityLogValue(message?.value)}`,
+      `${valueLabel}: ${this.formatActivityLogValue(this.getIframeActivityLogValue(message))}`,
       `timestamp: ${this.formatActivityLogTimestamp()}`
     ].join(" | ");
 
