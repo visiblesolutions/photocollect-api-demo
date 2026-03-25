@@ -50,20 +50,17 @@
   },
   "link": {
     "processStepLabel": "Process step:",
-    "processSteps": {
-      "pending": "Pending",
-      "finalize": "Finalize"
-    },
+    "activityLabel": "iFrame activity via event message",
     "iframeTitle": "Photo Collect embedded Deeplink",
     "flows": {
       "deeplink": {
         "title": "Open the Deeplink",
-        "description": "The Deeplink is created on the proxy without an API call. Use the generated link to start the process.",
+        "description": "The Deeplink is created in the demo app without an API call. Use the generated link to start the process.",
         "button": "Continue"
       },
       "iframe": {
         "title": "Use the Deeplink inside the iFrame",
-        "description": "The Deeplink is created on the proxy without an API call. Use the generated link as the iFrame href. Event messages from the iFrame transmit the process status and iFrame height to the parent window.",
+        "description": "The Deeplink is created in the demo app without an API call. Use the generated link as the iFrame href. Event messages from the iFrame transmit the process status and iFrame height to the parent window.",
         "button": "Continue"
       },
       "api": {
