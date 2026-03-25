@@ -19,6 +19,8 @@ import { TranslationService } from "./i18n.js";
 import { renderMediaView, resetMediaView } from "./media.js";
 
 const IFRAME_CONTENT_RESIZE_MESSAGE_TYPE = "photo-collect:content-resize";
+const IFRAME_ACTIVITY_MESSAGE_TYPE = "photo-collect:activity";
+const IFRAME_PROCESS_STEP_MESSAGE_TYPE = "photo-collect:process-step";
 const IFRAME_MIN_HEIGHT = 420;
 
 function escapeHtml(value) {
@@ -85,7 +87,8 @@ export class PhotoCollectDemoApp {
       resultPlaceholderState: null,
       lastExportPayload: null,
       inlineExportVisible: false,
-      inlinePlaceholderState: null
+      inlinePlaceholderState: null,
+      iframeActivityLogs: []
     };
   }
 
@@ -202,6 +205,63 @@ export class PhotoCollectDemoApp {
       this.window.cancelAnimationFrame(this.iframeHeightFrame);
       this.iframeHeightFrame = 0;
     }
+  }
+
+  formatActivityLogTimestamp(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
+  formatActivityLogValue(value) {
+    if (value === null) {
+      return "null";
+    }
+
+    if (typeof value === "undefined") {
+      return "undefined";
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+      return String(value);
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch (error) {
+      return String(value);
+    }
+  }
+
+  renderIframeActivityLog() {
+    const { linkIframeActivityLog } = this.elements;
+
+    if (!linkIframeActivityLog) {
+      return;
+    }
+
+    linkIframeActivityLog.textContent = this.state.iframeActivityLogs.join("\n");
+    linkIframeActivityLog.scrollTop = linkIframeActivityLog.scrollHeight;
+  }
+
+  appendIframeActivityLog(message) {
+    const entry = [
+      `type: ${this.formatActivityLogValue(message?.type)}`,
+      `value: ${this.formatActivityLogValue(message?.value)}`,
+      `timestamp: ${this.formatActivityLogTimestamp()}`
+    ].join(" | ");
+
+    this.state.iframeActivityLogs.push(entry);
+    this.renderIframeActivityLog();
   }
 
   syncCustomerNo() {
@@ -365,6 +425,7 @@ export class PhotoCollectDemoApp {
     this.state.lastExportPayload = null;
     this.state.inlineExportVisible = false;
     this.state.inlinePlaceholderState = null;
+    this.state.iframeActivityLogs = [];
 
     if (openLinkButton) {
       openLinkButton.href = "#";
@@ -395,6 +456,7 @@ export class PhotoCollectDemoApp {
     this.setResultPlaceholder("result.placeholder.waitingProcessedData");
     this.setInlineResultPlaceholder("result.placeholder.waitingProcessedData");
     this.setResultState("waiting", "result.badges.waiting", "result.status.waitingProxy");
+    this.renderIframeActivityLog();
   }
 
   setLoadingButtons(isLoading) {
@@ -630,7 +692,7 @@ export class PhotoCollectDemoApp {
     }
 
     const processStepLabel = normalizedStep
-      ? this.t(`link.processSteps.${normalizedStep}`, {}, normalizedStep)
+      ? normalizedStep
       : this.t("common.notSet", {}, "-");
 
     linkProcessStepValue.textContent = processStepLabel;
@@ -1108,8 +1170,20 @@ export class PhotoCollectDemoApp {
       return;
     }
 
-    if (event.data.type === "photo-collect:process-step") {
+    if (
+      event.data.type === IFRAME_PROCESS_STEP_MESSAGE_TYPE ||
+      event.data.type === IFRAME_ACTIVITY_MESSAGE_TYPE ||
+      event.data.type === IFRAME_CONTENT_RESIZE_MESSAGE_TYPE
+    ) {
+      this.appendIframeActivityLog(event.data);
+    }
+
+    if (event.data.type === IFRAME_PROCESS_STEP_MESSAGE_TYPE) {
       this.applyProcessStepStatus(event.data.value);
+      return;
+    }
+
+    if (event.data.type === IFRAME_ACTIVITY_MESSAGE_TYPE) {
       return;
     }
 
