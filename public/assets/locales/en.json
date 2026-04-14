@@ -5,6 +5,7 @@
   "common": {
     "customerNo": "customer_no",
     "generatedLink": "Generated link",
+    "generatedPayload": "Generated payload",
     "notAvailable": "n/a",
     "notSet": "-"
   },
@@ -19,7 +20,20 @@
     "description": "Photo Collect can be integrated into any IT infrastructure.",
     "customerNoLabel": "Identifier (customer_no)",
     "regenerate": "Regenerate",
-    "flowTypeLabel": "Flow type (site_code)",
+    "configGroups": {
+      "flow": "Flow",
+      "checks": "Checks",
+      "image": "Image"
+    },
+    "configFields": {
+      "collectSignature": "Collect Signature",
+      "collectMissingContact": "Collect Missing Contact",
+      "doVerification": "Do Verification",
+      "rejectSmiles": "Reject Smiles",
+      "rejectSunglasses": "Reject Sunglasses",
+      "backgroundColor": "Background Color"
+    },
+    "backgroundColorPlaceholder": "#RRGGBB",
     "processLocaleLabel": "Process language (locale)",
     "processLocaleOptions": {
       "en_US": "English (en_US)",
@@ -44,10 +58,6 @@
       }
     }
   },
-  "siteCodes": {
-    "api-demo": "Photo Flow",
-    "api-demo-signature": "Photo & Signature Flow"
-  },
   "link": {
     "processStepLabel": "Process step:",
     "activityLabel": "iFrame activity via event message",
@@ -55,12 +65,12 @@
     "flows": {
       "deeplink": {
         "title": "Open the Deeplink",
-        "description": "The Deeplink is created in the demo app without an API call. Use the generated link to start the process.",
+        "description": "The Deeplink is generated from the selected config and returned as a signed link. Use the generated link to start the process.",
         "button": "Continue"
       },
       "iframe": {
         "title": "Use the Deeplink inside the iFrame",
-        "description": "The Deeplink is created in the demo app without an API call. Use the generated link as the iFrame href. Event messages from the iFrame transmit the process status and iFrame height to the parent window.",
+        "description": "The Deeplink is generated from the selected config and used as the iFrame href. Event messages from the iFrame transmit the process status and iFrame height to the parent window.",
         "button": "Continue"
       },
       "api": {

@@ -14,7 +14,7 @@ if ($config === false) {
     throw new RuntimeException('Unable to load config/app.ini.');
 }
 
-$requiredConfigKeys = ['api_base_url', 'web_base_url', 'api_key', 'deeplink_secret', 'supported_site_codes'];
+$requiredConfigKeys = ['api_base_url', 'web_base_url', 'api_key', 'deeplink_secret', 'site_code'];
 $missingConfigKeys = array_filter(
     $requiredConfigKeys,
     static fn (string $key): bool => !array_key_exists($key, $config)
@@ -23,49 +23,74 @@ if ($missingConfigKeys !== []) {
     throw new RuntimeException('Missing required config key(s) in config/app.ini: ' . implode(', ', $missingConfigKeys));
 }
 
-$supportedSiteCodeLabels = [
-    'api-demo' => 'Photo Flow',
-    'api-demo-signature' => 'Photo & Signature Flow',
+$siteCode = trim((string) $config['site_code']);
+if ($siteCode === '') {
+    throw new RuntimeException('The config key site_code must not be empty in config/app.ini.');
+}
+
+$booleanConfigKeys = [
+    'collect_signature_request',
+    'collect_customerto_request',
+    'collect_verification_required',
+    'firstgate_check_smile',
+    'firstgate_check_sunglasses',
 ];
+$normalizeHexColor = static function (mixed $candidate): string {
+    $value = trim((string) $candidate);
 
-$availableSiteCodes = [];
-foreach ((array) $config['supported_site_codes'] as $siteCode) {
-    $siteCode = trim((string) $siteCode);
-    if ($siteCode === '') {
-        continue;
+    if ($value === '') {
+        return '';
     }
 
-    $availableSiteCodes[$siteCode] = $supportedSiteCodeLabels[$siteCode] ?? $siteCode;
-}
-
-if ($availableSiteCodes === []) {
-    throw new RuntimeException('No supported_site_codes are configured in config/app.ini.');
-}
-
-$defaultSiteCode = array_key_first($availableSiteCodes);
-
-if ($defaultSiteCode === null) {
-    throw new RuntimeException('Unable to determine a default site_code. Ensure supported_site_codes is not empty.');
-}
-
-$siteCodeOptions = '';
-foreach ($availableSiteCodes as $siteCode => $siteCodeLabel) {
-    $siteCodeOptions .= sprintf(
-        '                <option value="%s" data-default-label="%s"%s>%s</option>' . PHP_EOL,
-        htmlspecialchars((string) $siteCode, ENT_QUOTES, 'UTF-8'),
-        htmlspecialchars((string) $siteCodeLabel, ENT_QUOTES, 'UTF-8'),
-        $siteCode === $defaultSiteCode ? ' selected' : '',
-        htmlspecialchars((string) $siteCodeLabel, ENT_QUOTES, 'UTF-8'),
-    );
-}
-
-$resolveSiteCode = static function (?string $candidate) use ($availableSiteCodes, $defaultSiteCode): string {
-    $candidate = trim((string) $candidate);
-    if (array_key_exists($candidate, $availableSiteCodes)) {
-        return $candidate;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+        throw new InvalidArgumentException('The image_background_color value must use the format #RRGGBB.');
     }
 
-    return $defaultSiteCode;
+    return strtoupper($value);
+};
+$resolveRequestConfig = static function (mixed $candidate) use ($booleanConfigKeys, $normalizeHexColor): ?array {
+    if ($candidate === null) {
+        return null;
+    }
+
+    if (!is_array($candidate)) {
+        throw new InvalidArgumentException('The config field must be a JSON object.');
+    }
+
+    $config = [];
+    foreach ($candidate as $key => $value) {
+        $normalizedKey = trim((string) $key);
+        if ($normalizedKey === '' || $value === null) {
+            continue;
+        }
+
+        if ($normalizedKey === 'image_background_color') {
+            $normalizedColor = $normalizeHexColor($value);
+
+            if ($normalizedColor !== '') {
+                $config[$normalizedKey] = $normalizedColor;
+            }
+
+            continue;
+        }
+
+        if (in_array($normalizedKey, $booleanConfigKeys, true)) {
+            if (!is_bool($value)) {
+                throw new InvalidArgumentException(sprintf('The %s config value must be a boolean.', $normalizedKey));
+            }
+
+            $config[$normalizedKey] = $value;
+            continue;
+        }
+
+        if (!is_scalar($value) && !is_bool($value)) {
+            throw new InvalidArgumentException(sprintf('The %s config value must be scalar.', $normalizedKey));
+        }
+
+        $config[$normalizedKey] = $value;
+    }
+
+    return $config === [] ? null : $config;
 };
 
 $supportedLocales = ['en_US', 'de_DE'];
@@ -94,7 +119,7 @@ if ($basePath !== '') {
 $client = new PhotoCollectClient(
     apiBaseUrl: (string) $config['api_base_url'],
     webBaseUrl: (string) $config['web_base_url'],
-    siteCode: (string) $defaultSiteCode,
+    siteCode: $siteCode,
     apiKey: (string) $config['api_key'],
     deeplinkSecret: (string) $config['deeplink_secret'],
 );
@@ -110,27 +135,49 @@ $writeJson = static function (Response $response, array $payload, int $status = 
 $generateCustomerNo = static function (): string {
     return substr(bin2hex(random_bytes(8)), 0, 16);
 };
+$buildAppBaseUrl = static function (Request $request) use ($baseHref): string {
+    return (string) $request->getUri()
+        ->withPath($baseHref)
+        ->withQuery('')
+        ->withFragment('');
+};
+$buildResultRedirectUrl = static function (Request $request, string $customerNo, string $locale, string $flow) use ($buildAppBaseUrl, $siteCode): string {
+    $query = http_build_query([
+        'screen' => 'result',
+        'customer_no' => $customerNo,
+        'site_code' => $siteCode,
+        'locale' => $locale,
+        'flow' => $flow,
+    ], '', '&', PHP_QUERY_RFC3986);
 
-$app->get('/', function (Request $request, Response $response) use ($baseHref, $config, $siteCodeOptions, $defaultSiteCode, $availableSiteCodes): Response {
+    return $buildAppBaseUrl($request) . '?' . $query;
+};
+
+$app->get('/', function (Request $request, Response $response) use ($baseHref, $config, $generateCustomerNo): Response {
     $template = file_get_contents(__DIR__ . '/../templates/app.html');
     $baseUrl = (string) $config['web_base_url'];
     $apiBaseDisplay = (string) parse_url($baseUrl, PHP_URL_HOST);
+    $params = $request->getQueryParams();
+    $customerNo = trim((string) ($params['customer_no'] ?? ''));
+
     if ($apiBaseDisplay === '') {
         $apiBaseDisplay = $baseUrl;
     }
 
+    if ($customerNo === '') {
+        $customerNo = $generateCustomerNo();
+    }
+
+    $bootstrapJson = json_encode([
+        'customerNo' => $customerNo,
+    ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+
     $html = str_replace(
-        ['__BASE_HREF__', '__SITE_CODE__', '__API_BASE_URL__', '__SITE_CODE_OPTIONS__', '__SUPPORTED_SITE_CODES__'],
+        ['__BASE_HREF__', '__API_BASE_URL__', '__APP_BOOTSTRAP__'],
         [
             htmlspecialchars($baseHref, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars((string) $defaultSiteCode, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($apiBaseDisplay, ENT_QUOTES, 'UTF-8'),
-            $siteCodeOptions,
-            htmlspecialchars(
-                json_encode(array_keys($availableSiteCodes), JSON_THROW_ON_ERROR),
-                ENT_QUOTES,
-                'UTF-8'
-            ),
+            $bootstrapJson,
         ],
         $template ?: ''
     );
@@ -140,51 +187,83 @@ $app->get('/', function (Request $request, Response $response) use ($baseHref, $
     return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
 });
 
-$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode, $resolveLocale): Response {
+$app->post('/api/deeplink', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveRequestConfig, $resolveLocale, $buildResultRedirectUrl): Response {
     $data = (array) $request->getParsedBody();
     $customerNo = trim((string) ($data['customer_no'] ?? ''));
-    $redirectUri = isset($data['redirect_uri']) ? trim($data['redirect_uri']) : null; //empty string = disable default redirect
-    $siteCode = $resolveSiteCode($data['site_code'] ?? null);
     $locale = $resolveLocale($data['locale'] ?? null);
+    $flow = trim((string) ($data['flow'] ?? ''));
+
+    try {
+        $requestConfig = $resolveRequestConfig($data['config'] ?? null);
+    } catch (InvalidArgumentException $exception) {
+        return $writeJson($response, ['error' => $exception->getMessage()], 400);
+    }
+
+    if ($customerNo === '') {
+        $customerNo = $generateCustomerNo();
+    }
+
+    if (!in_array($flow, ['deeplink', 'deeplink-iframe'], true)) {
+        return $writeJson($response, ['error' => 'The flow field must be deeplink or deeplink-iframe.'], 400);
+    }
+
+    $deeplinkConfig = array_merge(
+        $requestConfig ?? [],
+        [
+            'collect_redirect_uri' => $flow === 'deeplink'
+                ? $buildResultRedirectUrl($request, $customerNo, $locale, 'deeplink')
+                : '',
+        ]
+    );
+
+    try {
+        return $writeJson($response, [
+            'customer_no' => $customerNo,
+            'deeplink_url' => $client->createDeeplink(
+                customerNo: $customerNo,
+                locale: $locale,
+                config: $deeplinkConfig,
+            ),
+        ]);
+    } catch (Throwable $exception) {
+        return $writeJson($response, ['error' => $exception->getMessage()], 502);
+    }
+});
+
+$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveRequestConfig, $resolveLocale): Response {
+    $data = (array) $request->getParsedBody();
+    $customerNo = trim((string) ($data['customer_no'] ?? ''));
+    $locale = $resolveLocale($data['locale'] ?? null);
+    try {
+        $requestConfig = $resolveRequestConfig($data['config'] ?? null);
+    } catch (InvalidArgumentException $exception) {
+        return $writeJson($response, ['error' => $exception->getMessage()], 400);
+    }
 
     if ($customerNo === '') {
         $customerNo = $generateCustomerNo();
     }
 
     try {
-        return $writeJson($response, $client->createDeeplink($customerNo, $redirectUri, $siteCode, $locale));
+        return $writeJson($response, $client->createInvitation(
+            customerNo: $customerNo,
+            locale: $locale,
+            config: $requestConfig,
+        ));
     } catch (Throwable $exception) {
         return $writeJson($response, ['error' => $exception->getMessage()], 502);
     }
 });
 
-$app->post('/api/invitation', function (Request $request, Response $response) use ($client, $writeJson, $generateCustomerNo, $resolveSiteCode, $resolveLocale): Response {
-    $data = (array) $request->getParsedBody();
-    $customerNo = trim((string) ($data['customer_no'] ?? ''));
-    $siteCode = $resolveSiteCode($data['site_code'] ?? null);
-    $locale = $resolveLocale($data['locale'] ?? null);
-
-    if ($customerNo === '') {
-        $customerNo = $generateCustomerNo();
-    }
-
-    try {
-        return $writeJson($response, $client->createInvitation($customerNo, $siteCode, $locale));
-    } catch (Throwable $exception) {
-        return $writeJson($response, ['error' => $exception->getMessage()], 502);
-    }
-});
-
-$app->get('/api/export', function (Request $request, Response $response) use ($client, $writeJson, $resolveSiteCode): Response {
+$app->get('/api/export', function (Request $request, Response $response) use ($client, $writeJson): Response {
     $customerNo = trim((string) ($request->getQueryParams()['customer_no'] ?? ''));
-    $siteCode = $resolveSiteCode($request->getQueryParams()['site_code'] ?? null);
 
     if ($customerNo === '') {
         return $writeJson($response, ['error' => 'The customer_no query parameter is required.'], 400);
     }
 
     try {
-        return $writeJson($response, $client->fetchLatestExport($customerNo, $siteCode));
+        return $writeJson($response, $client->fetchLatestExport(customerNo: $customerNo));
     } catch (Throwable $exception) {
         return $writeJson($response, ['error' => $exception->getMessage()], 502);
     }

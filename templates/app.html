@@ -15,6 +15,84 @@
       transition: none;
     }
 
+    .config-group {
+      margin-top: 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.5rem;
+      background: #f8fafc;
+      padding: 1rem;
+    }
+
+    .config-toggle-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .config-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      background: #ffffff;
+      padding: 0.875rem 1rem;
+    }
+
+    .config-toggle__label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .config-toggle__switch {
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+      width: 3rem;
+      height: 1.75rem;
+      border-radius: 9999px;
+      background: #cbd5e1;
+      transition: background-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .config-toggle__switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 9999px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+      transition: transform 160ms ease;
+    }
+
+    .config-toggle input:checked + .config-toggle__switch {
+      background: #145aff;
+    }
+
+    .config-toggle input:checked + .config-toggle__switch::after {
+      transform: translateX(1.25rem);
+    }
+
+    .config-toggle input:focus-visible + .config-toggle__switch {
+      box-shadow: 0 0 0 4px rgba(20, 90, 255, 0.18);
+    }
+
+    .config-color-row {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: 6.25rem minmax(0, 1fr);
+    }
+
+    .config-color-picker {
+      min-height: 3.125rem;
+      padding: 0.25rem;
+      cursor: pointer;
+    }
+
     .link-flow-swap {
       display: grid;
       gap: 1rem;
@@ -107,18 +185,70 @@
               </div>
 
               <div class="mt-4">
-                <label for="siteCodeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.flowTypeLabel">Flow type (site_code)</label>
-                <select id="siteCodeSelect" data-default-site-code="__SITE_CODE__" data-supported-site-codes="__SUPPORTED_SITE_CODES__" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
-                  __SITE_CODE_OPTIONS__
-                </select>
-              </div>
-
-              <div class="mt-4">
                 <label for="localeSelect" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.processLocaleLabel">Process language (locale)</label>
                 <select id="localeSelect" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20" data-default-locale="en_US">
                   <option value="en_US" selected data-locale-option="en_US">English (en_US)</option>
                   <option value="de_DE" data-locale-option="de_DE">German (de_DE)</option>
                 </select>
+              </div>
+
+              <div class="config-group">
+                <p class="mb-2 text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.configGroups.flow">Flow</p>
+                <div class="config-toggle-list">
+                  <label class="config-toggle">
+                    <span class="config-toggle__label" data-i18n="start.configFields.collectSignature">Collect Signature</span>
+                    <span class="inline-flex items-center">
+                      <input id="collectSignatureToggle" type="checkbox" class="sr-only">
+                      <span class="config-toggle__switch" aria-hidden="true"></span>
+                    </span>
+                  </label>
+
+                  <label class="config-toggle">
+                    <span class="config-toggle__label" data-i18n="start.configFields.collectMissingContact">Collect Missing Contact</span>
+                    <span class="inline-flex items-center">
+                      <input id="collectMissingContactToggle" type="checkbox" class="sr-only">
+                      <span class="config-toggle__switch" aria-hidden="true"></span>
+                    </span>
+                  </label>
+
+                  <label class="config-toggle">
+                    <span class="config-toggle__label" data-i18n="start.configFields.doVerification">Do Verification</span>
+                    <span class="inline-flex items-center">
+                      <input id="doVerificationToggle" type="checkbox" class="sr-only">
+                      <span class="config-toggle__switch" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="config-group">
+                <p class="mb-2 text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.configGroups.checks">Checks</p>
+                <div class="config-toggle-list">
+                  <label class="config-toggle">
+                    <span class="config-toggle__label" data-i18n="start.configFields.rejectSmiles">Reject Smiles</span>
+                    <span class="inline-flex items-center">
+                      <input id="rejectSmilesToggle" type="checkbox" class="sr-only">
+                      <span class="config-toggle__switch" aria-hidden="true"></span>
+                    </span>
+                  </label>
+
+                  <label class="config-toggle">
+                    <span class="config-toggle__label" data-i18n="start.configFields.rejectSunglasses">Reject Sunglasses</span>
+                    <span class="inline-flex items-center">
+                      <input id="rejectSunglassesToggle" type="checkbox" class="sr-only" checked>
+                      <span class="config-toggle__switch" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="config-group">
+                <label for="backgroundColorHexInput" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.configGroups.image">Image</label>
+                <p class="mb-2 text-sm font-semibold text-slate-800" data-i18n="start.configFields.backgroundColor">Background Color</p>
+                <div class="config-color-row">
+                  <input id="backgroundColorPicker" type="color" value="#FFFFFF" class="config-color-picker rounded-2xl border border-slate-300 bg-white shadow-sm">
+                  <input id="backgroundColorHexInput" type="text" inputmode="text" placeholder="#RRGGBB" class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20" data-i18n-attr="placeholder:start.backgroundColorPlaceholder">
+                </div>
               </div>
             </div>
 
@@ -214,6 +344,10 @@
                   <p class="text-xs font-semibold tracking-[0.18em] text-slate-500" data-i18n="common.generatedLink">Generated link</p>
                   <p id="generatedLinkText" class="mt-2 break-all font-mono text-xs leading-6 text-slate-700"></p>
                 </div>
+                <div id="generatedPayloadPanel" class="hidden rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p class="text-xs font-semibold tracking-[0.18em] text-slate-500" data-i18n="common.generatedPayload">Generated payload</p>
+                  <pre id="generatedPayloadText" class="mt-2 overflow-x-auto whitespace-pre-wrap break-all font-mono text-xs leading-6 text-slate-700" style="white-space: break-spaces;"></pre>
+                </div>
 
               </div>
             </div>
@@ -274,6 +408,7 @@
     </div>
   </div>
 
+  <script id="appBootstrapData" type="application/json">__APP_BOOTSTRAP__</script>
   <script type="module" src="assets/app.js"></script>
 </body>
 </html>

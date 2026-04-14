@@ -30,52 +30,58 @@ final class PhotoCollectClient
         ]);
     }
 
-    public function createDeeplink(string $customerNo, ?string $redirectUri = null, ?string $siteCode = null, ?string $locale = null): array
+    public function createDeeplink(
+        string $customerNo,
+        ?string $locale = null,
+        ?array $config = null,
+    ): string
     {
         $customerNo = trim($customerNo);
-        $siteCode = $this->resolveSiteCode($siteCode);
+        $siteCode = $this->resolveSiteCode();
         $locale = trim((string) $locale);
-        if ($locale === '') {
+
+        if (empty($locale)) {
             $locale = 'en_US';
         }
 
-        if ($customerNo === '') {
+        if (empty($customerNo)) {
             throw new RuntimeException('A customer_no value is required to generate a deeplink.');
         }
 
-        $signedParameters = [
+        $salt = (string) time();
+        $payload = [
             'customer_no' => $customerNo,
             'site_code' => $siteCode,
+            'salt' => $salt,
+            'expiry_date' => date('Y-m-d', strtotime('+1 day')),
+            'config' => (empty($config) ? null : $this->normalizeDeeplinkConfig($config))
         ];
 
-
-        if (!is_null($redirectUri)) { //empty string = disable default redirect
-            $signedParameters['redirect_uri'] = trim($redirectUri);
+        try {
+            $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        } catch (JsonException $exception) {
+            throw new RuntimeException('Unable to encode the deeplink payload.', 0, $exception);
         }
 
-        $signedParameters['salt'] = (string) time();
-        $signature = base64_encode(
-            hash_hmac('sha256', implode('', $signedParameters), $this->deeplinkSecret, true)
-        );
+        //As we use HEX as the output from hash_hmac, no base64_encode is required
+        $signature = hash_hmac('sha256', $payloadJson, $this->deeplinkSecret);
 
-        $parameters = $signedParameters;
-        $parameters['sig'] = $signature;
-        $parameters['locale'] = $locale;
-
-        return [
-            'customer_no' => $customerNo,
-            'site_code' => $siteCode,
-            'salt' => $signedParameters['salt'],
-            'deeplink_url' => rtrim($this->webBaseUrl, '/') . '/collect/new?' . http_build_query($parameters, '', '&', PHP_QUERY_RFC3986),
-            'redirect_uri' => $redirectUri,
-        ];
+        return rtrim($this->webBaseUrl, '/') . '/collect/new?'
+                . 'payload=' . rawurlencode(base64_encode($payloadJson))
+                . '&sig=' . rawurlencode($signature)
+                . '&locale=' . rawurlencode($locale);
     }
 
-    public function createInvitation(string $customerNo, ?string $siteCode = null, ?string $locale = null): array
+    public function createInvitation(
+        string $customerNo,
+        ?string $locale = null,
+        ?array $config = null,
+    ): array
     {
         $customerNo = trim($customerNo);
-        $siteCode = $this->resolveSiteCode($siteCode);
+        $siteCode = $this->resolveSiteCode();
         $locale = trim((string) $locale);
+        $invitationConfig = $this->normalizeInvitationConfig($config);
         if ($locale === '') {
             $locale = 'en_US';
         }
@@ -84,15 +90,21 @@ final class PhotoCollectClient
             throw new RuntimeException('A customer_no value is required to create an invitation.');
         }
 
+        $payload = [
+            'customer_no' => $customerNo,
+            'site_code' => $siteCode,
+            'locale' => $locale,
+            'upload_channel' => 'registration',
+        ];
+
+        if ($invitationConfig !== []) {
+            $payload['config'] = $invitationConfig;
+        }
+
         $response = $this->request(
             method: 'POST',
             path: '/invitation',
-            body: [
-                'customer_no' => $customerNo,
-                'site_code' => $siteCode,
-                'locale' => $locale,
-                'upload_channel' => 'registration',
-            ],
+            body: $payload,
         );
 
         $invitationUrl = (string) ($response['invitation_url'] ?? '');
@@ -109,10 +121,10 @@ final class PhotoCollectClient
         ];
     }
 
-    public function fetchLatestExport(string $customerNo, ?string $siteCode = null): array
+    public function fetchLatestExport(string $customerNo): array
     {
         $customerNo = trim($customerNo);
-        $siteCode = $this->resolveSiteCode($siteCode);
+        $siteCode = $this->resolveSiteCode();
 
         if ($customerNo === '') {
             throw new RuntimeException('A customer_no value is required to fetch exports.');
@@ -187,11 +199,68 @@ final class PhotoCollectClient
         return $payload;
     }
 
-    private function resolveSiteCode(?string $siteCode): string
+    private function resolveSiteCode(): string
     {
-        $siteCode = trim((string) $siteCode);
+        return $this->siteCode;
+    }
 
-        return $siteCode === '' ? $this->siteCode : $siteCode;
+    private function normalizeInvitationConfig(?array $config): array
+    {
+        return $this->normalizeConfigValues($config);
+    }
+
+    private function normalizeDeeplinkConfig(?array $config): array
+    {
+        $normalizedConfig = $this->normalizeConfigValues($config);
+        $deeplinkConfig = [];
+
+        foreach ($normalizedConfig as $key => $value) {
+            $deeplinkConfig[$key] = $this->stringifyDeeplinkConfigValue($value);
+        }
+
+        ksort($deeplinkConfig);
+
+        return $deeplinkConfig;
+    }
+
+    private function normalizeConfigValues(?array $config): array
+    {
+        if ($config === null) {
+            return [];
+        }
+
+        $normalizedConfig = [];
+        foreach ($config as $key => $value) {
+            $normalizedKey = trim((string) $key);
+            if ($normalizedKey === '' || $value === null) {
+                continue;
+            }
+
+            if (!is_scalar($value) && !is_bool($value)) {
+                throw new RuntimeException('Config values must be scalar.');
+            }
+
+            $normalizedConfig[$normalizedKey] = $value;
+        }
+
+        ksort($normalizedConfig);
+
+        return $normalizedConfig;
+    }
+
+    private function stringifyDeeplinkConfigValue(mixed $value): string|bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_float($value)) {
+            $normalized = rtrim(rtrim(sprintf('%.14F', $value), '0'), '.');
+
+            return $normalized === '' ? '0' : $normalized;
+        }
+
+        return (string) $value;
     }
 
     private function deleteExport(string $invitationKey): array

@@ -1,16 +1,14 @@
 import { requestJson } from "./api.js";
 import {
+  FIXED_SITE_CODE,
   appBaseUrl,
   createRuntimeConfig,
   getDefaultLocale,
-  getDefaultSiteCode,
   getDefaultUiLanguage,
   getSelectedLocale,
-  getSelectedSiteCode,
   mapLocaleToUiLanguage,
   normalizeUiLanguage,
   persistLocale,
-  persistSiteCode,
   persistUiLanguage,
   readCookie
 } from "./config.js";
@@ -22,6 +20,16 @@ const IFRAME_CONTENT_RESIZE_MESSAGE_TYPE = "photo-collect:content-resize";
 const IFRAME_ACTIVITY_MESSAGE_TYPE = "photo-collect:activity";
 const IFRAME_PROCESS_STEP_MESSAGE_TYPE = "photo-collect:process-step";
 const IFRAME_MIN_HEIGHT = 420;
+const DEFAULT_BACKGROUND_COLOR_PICKER = "#FFFFFF";
+const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/i;
+const DEFAULT_CONFIG_OPTIONS = Object.freeze({
+  collect_signature_request: false,
+  collect_customerto_request: false,
+  collect_verification_required: false,
+  firstgate_check_smile: false,
+  firstgate_check_sunglasses: true,
+  image_background_color: ""
+});
 
 function escapeHtml(value) {
   return String(value)
@@ -32,6 +40,47 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function readBootstrapData(documentRef = document) {
+  const element = documentRef.getElementById("appBootstrapData");
+  if (!element?.textContent) {
+    return {
+      customerNo: ""
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(element.textContent);
+    return {
+      customerNo: typeof parsed?.customerNo === "string" ? parsed.customerNo : ""
+    };
+  } catch (error) {
+    console.error("Unable to parse bootstrap app data.", error);
+    return {
+      customerNo: ""
+    };
+  }
+}
+
+function createDefaultConfigOptions() {
+  return { ...DEFAULT_CONFIG_OPTIONS };
+}
+
+function normalizeHexColor(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  return HEX_COLOR_PATTERN.test(normalized) ? normalized : "";
+}
+
+function decodeBase64Utf8(base64Value, windowRef = window) {
+  const binary = windowRef.atob(base64Value);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+
+  if ("TextDecoder" in windowRef) {
+    return new windowRef.TextDecoder("utf-8").decode(bytes);
+  }
+
+  return binary;
+}
+
 // The demo stays framework-free on purpose. This controller keeps the imperative
 // code readable by grouping state, rendering, and browser integrations by concern.
 export class PhotoCollectDemoApp {
@@ -39,7 +88,8 @@ export class PhotoCollectDemoApp {
     this.document = documentRef;
     this.window = windowRef;
     this.elements = collectElements(documentRef);
-    this.config = createRuntimeConfig(this.elements);
+    this.bootstrapData = readBootstrapData(documentRef);
+    this.config = createRuntimeConfig();
     this.i18n = new TranslationService({
       baseUrl: documentRef.baseURI,
       documentRef,
@@ -72,7 +122,8 @@ export class PhotoCollectDemoApp {
     return {
       customerNo: "",
       flow: "",
-      siteCode: getDefaultSiteCode(this.elements, this.config, this.document),
+      siteCode: FIXED_SITE_CODE,
+      configOptions: createDefaultConfigOptions(),
       locale: getDefaultLocale(this.elements, this.config, this.document),
       uiLanguage: getDefaultUiLanguage(this.config, this.window, this.document),
       linkUrl: "",
@@ -95,26 +146,70 @@ export class PhotoCollectDemoApp {
   bindEvents() {
     const {
       appLanguageButtons,
+      backgroundColorHexInput,
+      backgroundColorPicker,
       closeResultButtons,
+      collectMissingContactToggle,
+      collectSignatureToggle,
+      doVerificationToggle,
       linkInlineRetryButton,
       localeSelect,
       logoHomeButton,
       refreshCustomerNoButton,
+      rejectSmilesToggle,
+      rejectSunglassesToggle,
       retryFetchButton,
-      siteCodeSelect,
       startApiButton,
       startDeeplinkButton,
       startDeeplinkIframeButton
     } = this.elements;
 
     refreshCustomerNoButton?.addEventListener("click", () => {
-      this.state.customerNo = this.generateCustomerNo();
-      this.syncCustomerNo();
+      this.window.location.assign(this.getAppBaseUrl().toString());
     });
 
-    siteCodeSelect?.addEventListener("change", () => {
-      this.state.siteCode = this.getSelectedSiteCode();
-      this.syncSiteCode();
+    [
+      collectSignatureToggle,
+      collectMissingContactToggle,
+      doVerificationToggle,
+      rejectSmilesToggle,
+      rejectSunglassesToggle
+    ].forEach((control) => {
+      control?.addEventListener("change", () => {
+        this.state.configOptions = this.getSelectedConfigOptions();
+      });
+    });
+
+    backgroundColorPicker?.addEventListener("input", () => {
+      if (backgroundColorHexInput) {
+        backgroundColorHexInput.value = String(backgroundColorPicker.value || DEFAULT_BACKGROUND_COLOR_PICKER).toUpperCase();
+        backgroundColorHexInput.setCustomValidity("");
+        backgroundColorHexInput.removeAttribute("aria-invalid");
+      }
+
+      this.state.configOptions = this.getSelectedConfigOptions();
+    });
+
+    backgroundColorHexInput?.addEventListener("input", () => {
+      const normalizedColor = normalizeHexColor(backgroundColorHexInput.value);
+      const hasValue = String(backgroundColorHexInput.value || "").trim() !== "";
+
+      if (!hasValue) {
+        backgroundColorHexInput.setCustomValidity("");
+        backgroundColorHexInput.removeAttribute("aria-invalid");
+      } else if (normalizedColor) {
+        backgroundColorHexInput.value = normalizedColor;
+        backgroundColorHexInput.setCustomValidity("");
+        backgroundColorHexInput.removeAttribute("aria-invalid");
+        if (backgroundColorPicker) {
+          backgroundColorPicker.value = normalizedColor;
+        }
+      } else {
+        backgroundColorHexInput.setCustomValidity("Use #RRGGBB.");
+        backgroundColorHexInput.setAttribute("aria-invalid", "true");
+      }
+
+      this.state.configOptions = this.getSelectedConfigOptions();
     });
 
     localeSelect?.addEventListener("change", () => {
@@ -178,12 +273,68 @@ export class PhotoCollectDemoApp {
     return appBaseUrl(this.document);
   }
 
-  getSelectedSiteCode() {
-    return getSelectedSiteCode(this.elements, this.config, getDefaultSiteCode(this.elements, this.config, this.document));
-  }
-
   getSelectedLocale() {
     return getSelectedLocale(this.elements, this.config, getDefaultLocale(this.elements, this.config, this.document));
+  }
+
+  sanitizeConfigOptions(configOptions = {}) {
+    return {
+      collect_signature_request: Boolean(configOptions.collect_signature_request),
+      collect_customerto_request: Boolean(configOptions.collect_customerto_request),
+      collect_verification_required: Boolean(configOptions.collect_verification_required),
+      firstgate_check_smile: Boolean(configOptions.firstgate_check_smile),
+      firstgate_check_sunglasses: typeof configOptions.firstgate_check_sunglasses === "boolean"
+        ? configOptions.firstgate_check_sunglasses
+        : DEFAULT_CONFIG_OPTIONS.firstgate_check_sunglasses,
+      image_background_color: normalizeHexColor(configOptions.image_background_color)
+    };
+  }
+
+  getSelectedConfigOptions() {
+    return this.sanitizeConfigOptions({
+      collect_signature_request: Boolean(this.elements.collectSignatureToggle?.checked),
+      collect_customerto_request: Boolean(this.elements.collectMissingContactToggle?.checked),
+      collect_verification_required: Boolean(this.elements.doVerificationToggle?.checked),
+      firstgate_check_smile: Boolean(this.elements.rejectSmilesToggle?.checked),
+      firstgate_check_sunglasses: this.elements.rejectSunglassesToggle
+        ? Boolean(this.elements.rejectSunglassesToggle.checked)
+        : DEFAULT_CONFIG_OPTIONS.firstgate_check_sunglasses,
+      image_background_color: this.elements.backgroundColorHexInput?.value || ""
+    });
+  }
+
+  syncConfigOptions() {
+    this.state.configOptions = this.sanitizeConfigOptions(this.state.configOptions);
+
+    if (this.elements.collectSignatureToggle) {
+      this.elements.collectSignatureToggle.checked = this.state.configOptions.collect_signature_request;
+    }
+
+    if (this.elements.collectMissingContactToggle) {
+      this.elements.collectMissingContactToggle.checked = this.state.configOptions.collect_customerto_request;
+    }
+
+    if (this.elements.doVerificationToggle) {
+      this.elements.doVerificationToggle.checked = this.state.configOptions.collect_verification_required;
+    }
+
+    if (this.elements.rejectSmilesToggle) {
+      this.elements.rejectSmilesToggle.checked = this.state.configOptions.firstgate_check_smile;
+    }
+
+    if (this.elements.rejectSunglassesToggle) {
+      this.elements.rejectSunglassesToggle.checked = this.state.configOptions.firstgate_check_sunglasses;
+    }
+
+    if (this.elements.backgroundColorPicker) {
+      this.elements.backgroundColorPicker.value = this.state.configOptions.image_background_color || DEFAULT_BACKGROUND_COLOR_PICKER;
+    }
+
+    if (this.elements.backgroundColorHexInput) {
+      this.elements.backgroundColorHexInput.value = this.state.configOptions.image_background_color;
+      this.elements.backgroundColorHexInput.setCustomValidity("");
+      this.elements.backgroundColorHexInput.removeAttribute("aria-invalid");
+    }
   }
 
   clearPolling() {
@@ -288,18 +439,7 @@ export class PhotoCollectDemoApp {
   }
 
   syncSiteCode() {
-    const selected = this.getSelectedSiteCode();
-    const hasValidStateSiteCode = this.config.supportedSiteCodes.includes(this.state.siteCode);
-
-    if (!hasValidStateSiteCode) {
-      this.state.siteCode = selected;
-    }
-
-    if (this.elements.siteCodeSelect) {
-      this.elements.siteCodeSelect.value = this.state.siteCode;
-    }
-
-    persistSiteCode(this.config, this.state.siteCode, this.document);
+    this.state.siteCode = FIXED_SITE_CODE;
   }
 
   syncLocale() {
@@ -400,7 +540,7 @@ export class PhotoCollectDemoApp {
   }
 
   resetToStart(pushHistory = true) {
-    this.state.customerNo = this.generateCustomerNo();
+    this.state.customerNo = this.bootstrapData.customerNo || this.generateCustomerNo();
     this.resetGeneratedState();
     this.syncCustomerNo();
     showScreen(this.elements.screens, "start");
@@ -478,11 +618,18 @@ export class PhotoCollectDemoApp {
 
   setLoadingButtons(isLoading) {
     [
+      this.elements.collectSignatureToggle,
+      this.elements.collectMissingContactToggle,
+      this.elements.doVerificationToggle,
+      this.elements.rejectSmilesToggle,
+      this.elements.rejectSunglassesToggle,
+      this.elements.backgroundColorPicker,
+      this.elements.backgroundColorHexInput,
+      this.elements.localeSelect,
       this.elements.startDeeplinkButton,
       this.elements.startDeeplinkIframeButton,
       this.elements.startApiButton,
-      this.elements.refreshCustomerNoButton,
-      this.elements.siteCodeSelect
+      this.elements.refreshCustomerNoButton
     ].forEach((control) => {
       setLoadingState(control, isLoading);
     });
@@ -492,7 +639,6 @@ export class PhotoCollectDemoApp {
     // Static copy and dynamic screen copy are updated separately so changing the
     // UI language does not reset the active flow.
     this.i18n.applyDocumentTranslations();
-    this.i18n.localizeSiteCodeOptions(this.elements.siteCodeSelect);
     this.i18n.localizeLocaleOptions(this.elements.localeSelect);
     this.refreshLinkScreenCopy();
     this.refreshResultScreenCopy();
@@ -581,10 +727,31 @@ export class PhotoCollectDemoApp {
     return url.toString();
   }
 
+  getFormattedDeeplinkPayload() {
+    if (!this.state.linkUrl) {
+      return "";
+    }
+
+    try {
+      const url = new URL(this.state.linkUrl);
+      const payload = url.searchParams.get("payload");
+      if (!payload) {
+        return "";
+      }
+
+      const decodedPayload = JSON.parse(decodeBase64Utf8(payload, this.window));
+      return JSON.stringify(decodedPayload, null, 2);
+    } catch (error) {
+      return "";
+    }
+  }
+
   setLinkScreen(copy) {
     const {
       generatedLinkPanel,
       generatedLinkText,
+      generatedPayloadPanel,
+      generatedPayloadText,
       linkActionRow,
       linkDescription,
       linkIframePanel,
@@ -627,6 +794,12 @@ export class PhotoCollectDemoApp {
     if (generatedLinkPanel && generatedLinkText) {
       generatedLinkText.textContent = this.state.linkUrl || "";
       generatedLinkPanel.classList.toggle("hidden", !options.showGeneratedLink || !this.state.linkUrl);
+    }
+
+    if (generatedPayloadPanel && generatedPayloadText) {
+      const formattedPayload = options.showGeneratedLink ? this.getFormattedDeeplinkPayload() : "";
+      generatedPayloadText.textContent = formattedPayload;
+      generatedPayloadPanel.classList.toggle("hidden", !formattedPayload);
     }
 
     linkProcessStepPanel.classList.toggle("hidden", !options.showIframe);
@@ -881,10 +1054,48 @@ export class PhotoCollectDemoApp {
     return requestJson(path, options, this.t.bind(this));
   }
 
+  buildRequestConfig(extraConfig = {}) {
+    const config = {
+      collect_signature_request: this.state.configOptions.collect_signature_request,
+      collect_customerto_request: this.state.configOptions.collect_customerto_request,
+      collect_verification_required: this.state.configOptions.collect_verification_required,
+      firstgate_check_smile: this.state.configOptions.firstgate_check_smile,
+      firstgate_check_sunglasses: this.state.configOptions.firstgate_check_sunglasses
+    };
+
+    const backgroundColor = normalizeHexColor(this.state.configOptions.image_background_color);
+    if (backgroundColor) {
+      config.image_background_color = backgroundColor;
+    }
+
+    Object.entries(extraConfig).forEach(([key, value]) => {
+      if (value !== null && typeof value !== "undefined") {
+        config[key] = value;
+      }
+    });
+
+    return config;
+  }
+
+  async requestDeeplink(flow) {
+    return this.requestJson("api/deeplink", {
+      method: "POST",
+      body: JSON.stringify({
+        customer_no: this.state.customerNo,
+        site_code: this.state.siteCode,
+        locale: this.state.locale,
+        flow,
+        config: this.buildRequestConfig()
+      })
+    });
+  }
+
   async startFlow(flow) {
     this.state.flow = flow;
     this.state.processStep = "";
-    this.state.siteCode = this.getSelectedSiteCode();
+    this.state.siteCode = FIXED_SITE_CODE;
+    this.state.configOptions = this.getSelectedConfigOptions();
+    this.syncConfigOptions();
     this.state.locale = this.getSelectedLocale();
     this.syncCustomerNo();
     this.setLoadingButtons(true);
@@ -893,50 +1104,40 @@ export class PhotoCollectDemoApp {
       let payload;
 
       if (flow === "deeplink") {
-        payload = await this.requestJson("api/deeplink", {
-          method: "POST",
-          body: JSON.stringify({
-            customer_no: this.state.customerNo,
-            site_code: this.state.siteCode,
-            locale: this.state.locale,
-            // Deeplink mode returns the user to the demo so the proxy can poll /export.
-            redirect_uri: this.buildRedirectUrl()
-          })
-        });
-
-        this.state.linkUrl = payload.deeplink_url;
+        payload = await this.requestDeeplink("deeplink");
+        this.state.customerNo = payload.customer_no || this.state.customerNo;
+        this.state.linkUrl = payload.deeplink_url || "";
+        this.syncCustomerNo();
         this.showDeeplinkFlowScreen();
         return;
       }
 
       if (flow === "deeplink-iframe") {
-        payload = await this.requestJson("api/deeplink", {
-          method: "POST",
-          body: JSON.stringify({
-            customer_no: this.state.customerNo,
-            site_code: this.state.siteCode,
-            locale: this.state.locale,
-            // An empty string disables the upstream default redirect for iframe mode.
-            redirect_uri: ""
-          })
-        });
-
-        this.state.linkUrl = payload.deeplink_url;
+        payload = await this.requestDeeplink("deeplink-iframe");
+        this.state.customerNo = payload.customer_no || this.state.customerNo;
+        this.state.linkUrl = payload.deeplink_url || "";
+        this.syncCustomerNo();
         this.showDeeplinkIframeFlowScreen();
         return;
       }
 
       if (flow === "api") {
+        const redirectUri = this.buildRedirectUrl();
         payload = await this.requestJson("api/invitation", {
           method: "POST",
           body: JSON.stringify({
             customer_no: this.state.customerNo,
             site_code: this.state.siteCode,
-            locale: this.state.locale
+            locale: this.state.locale,
+            config: this.buildRequestConfig({
+              collect_redirect_uri: redirectUri
+            })
           })
         });
 
+        this.state.customerNo = payload.customer_no || this.state.customerNo;
         this.state.linkUrl = payload.invitation_url;
+        this.syncCustomerNo();
         this.showApiFlowScreen();
         return;
       }
@@ -1147,14 +1348,12 @@ export class PhotoCollectDemoApp {
     const customerNo = params.get("customer_no");
     const requestedScreen = params.get("screen");
     const flow = params.get("flow");
-    const siteCode = params.get("site_code");
     const locale = params.get("locale");
     const hasPersistedUiLanguage = Boolean(readCookie(this.config.cookieNames.uiLanguage, this.document));
 
-    this.state.customerNo = customerNo || this.generateCustomerNo();
-    this.state.siteCode = siteCode && this.config.supportedSiteCodes.includes(siteCode)
-      ? siteCode
-      : getDefaultSiteCode(this.elements, this.config, this.document);
+    this.state.customerNo = customerNo || this.bootstrapData.customerNo || this.generateCustomerNo();
+    this.state.siteCode = FIXED_SITE_CODE;
+    this.state.configOptions = createDefaultConfigOptions();
     this.state.locale = locale && this.config.supportedLocales.includes(locale)
       ? locale
       : getDefaultLocale(this.elements, this.config, this.document);
@@ -1164,6 +1363,7 @@ export class PhotoCollectDemoApp {
     }
 
     this.syncSiteCode();
+    this.syncConfigOptions();
     this.syncLocale();
     this.state.flow = flow || "";
     this.syncCustomerNo();
