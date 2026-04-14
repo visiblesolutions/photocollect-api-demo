@@ -71,17 +71,6 @@ export class TranslationService {
     });
   }
 
-  localizeSiteCodeOptions(select) {
-    if (!select) {
-      return;
-    }
-
-    Array.from(select.options).forEach((option) => {
-      const fallback = option.dataset.defaultLabel || option.value;
-      option.textContent = this.translate(`siteCodes.${option.value}`, {}, fallback);
-    });
-  }
-
   localizeLocaleOptions(select) {
     if (!select) {
       return;

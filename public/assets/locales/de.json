@@ -5,6 +5,7 @@
   "common": {
     "customerNo": "customer_no",
     "generatedLink": "Generierter Link",
+    "generatedPayload": "Generierte Payload",
     "notAvailable": "k. A.",
     "notSet": "-"
   },
@@ -19,7 +20,20 @@
     "description": "Photo Collect kann in jede IT-Infrastruktur integriert werden.",
     "customerNoLabel": "Kennung (customer_no)",
     "regenerate": "Neu generieren",
-    "flowTypeLabel": "Prozess-Typ (site_code)",
+    "configGroups": {
+      "flow": "Ablauf",
+      "checks": "Prüfungen",
+      "image": "Bild"
+    },
+    "configFields": {
+      "collectSignature": "Unterschrift erfassen",
+      "collectMissingContact": "Fehlenden Kontakt erfassen",
+      "doVerification": "Verifikation durchführen",
+      "rejectSmiles": "Lächeln ablehnen",
+      "rejectSunglasses": "Sonnenbrillen ablehnen",
+      "backgroundColor": "Hintergrundfarbe"
+    },
+    "backgroundColorPlaceholder": "#RRGGBB",
     "processLocaleLabel": "Prozesssprache (locale)",
     "processLocaleOptions": {
       "en_US": "Englisch (en_US)",
@@ -44,10 +58,6 @@
       }
     }
   },
-  "siteCodes": {
-    "api-demo": "Foto-Prozess",
-    "api-demo-signature": "Foto- und Unterschrift-Prozess"
-  },
   "link": {
     "processStepLabel": "Prozessschritt:",
     "activityLabel": "iFrame Aktivität via event message",
@@ -59,12 +69,12 @@
     "flows": {
       "deeplink": {
         "title": "Deeplink öffnen",
-        "description": "Der Deeplink wird ohne API-Aufruf auf dem Proxy erstellt. Verwenden Sie den generierten Link, um den Prozess zu starten.",
+        "description": "Der Deeplink wird aus der gewählten Konfiguration erzeugt und als signierter Link zurückgegeben. Verwenden Sie den generierten Link, um den Prozess zu starten.",
         "button": "Weiter"
       },
       "iframe": {
         "title": "Deeplink im iFrame",
-        "description": "Der Deeplink wird ohne API-Aufruf auf dem Proxy erstellt. Verwenden Sie den generierten Link im iFrame. Event-Nachrichten aus dem iFrame übermitteln den Prozessstatus und die iFrame-Höhe an das übergeordnete Fenster.",
+        "description": "Der Deeplink wird aus der gewählten Konfiguration erzeugt und als iFrame-URL verwendet. Event-Nachrichten aus dem iFrame übermitteln den Prozessstatus und die iFrame-Höhe an das übergeordnete Fenster.",
         "button": "Weiter"
       },
       "api": {

@@ -2,13 +2,14 @@
 
 This is a demo for the Photo Collect flow:
 
-1. Choose Deeplink, Deeplink iFrame, or API on the start screen.
-2. Generate either a signed deeplink, an embedded deeplink, or a `POST /invitation` invitation URL.
+1. Configure the flow toggles, checks, optional background color, locale, and launch mode on the start screen.
+2. Open either a generated signed deeplink, an embedded deeplink, or a `POST /invitation` invitation URL for the fixed `api-demo` site code.
 3. Poll `GET /export` and show the latest photo for the provided `customer_no`.
 
 ## Configuration
 
 Runtime settings are stored in config/app.ini. Take the structure from config/app.ini.example.
+Use a single `site_code` entry there; the app no longer supports a list of site codes.
 
 ## Install
 

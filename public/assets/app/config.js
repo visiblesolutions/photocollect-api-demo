@@ -3,23 +3,16 @@ export const SUPPORTED_LOCALES = ["en_US", "de_DE"];
 export const DEFAULT_LOCALE = "en_US";
 export const SUPPORTED_UI_LANGUAGES = ["en", "de"];
 export const DEFAULT_UI_LANGUAGE = "en";
+export const FIXED_SITE_CODE = "api-demo";
 
 export const COOKIE_NAMES = {
-  siteCode: "photo_collect_site_code",
   locale: "photo_collect_locale",
   uiLanguage: "photo_collect_ui_language"
 };
 
-export function createRuntimeConfig(elements) {
-  const supportedSiteCodes = getConfiguredSiteCodes(elements.siteCodeSelect);
-  const defaultSiteCodeFromTemplate = elements.siteCodeSelect
-    ? String(elements.siteCodeSelect.dataset.defaultSiteCode || "").trim()
-    : "";
-
+export function createRuntimeConfig() {
   return {
-    supportedSiteCodes,
-    defaultSiteCodeFromTemplate,
-    siteCodeFallback: defaultSiteCodeFromTemplate || supportedSiteCodes[0] || "",
+    siteCode: FIXED_SITE_CODE,
     supportedLocales: SUPPORTED_LOCALES,
     defaultLocale: DEFAULT_LOCALE,
     supportedUiLanguages: SUPPORTED_UI_LANGUAGES,
@@ -58,14 +51,6 @@ export function writeCookie(name, value, maxAgeSeconds, documentRef = document) 
   documentRef.cookie = `${encodeURIComponent(name)}=${safeValue}; ${attributes.join("; ")}`;
 }
 
-export function persistSiteCode(config, siteCode, documentRef = document) {
-  if (!config.supportedSiteCodes.includes(siteCode)) {
-    return;
-  }
-
-  writeCookie(config.cookieNames.siteCode, siteCode, config.cookieMaxAgeSeconds, documentRef);
-}
-
 export function persistLocale(config, locale, documentRef = document) {
   if (!config.supportedLocales.includes(locale)) {
     return;
@@ -82,26 +67,16 @@ export function persistUiLanguage(config, language, documentRef = document) {
   writeCookie(config.cookieNames.uiLanguage, language, config.cookieMaxAgeSeconds, documentRef);
 }
 
-export function normalizeUiLanguage(value, config = { supportedUiLanguages: SUPPORTED_UI_LANGUAGES, defaultUiLanguage: DEFAULT_UI_LANGUAGE }) {
+export function normalizeUiLanguage(
+  value,
+  config = { supportedUiLanguages: SUPPORTED_UI_LANGUAGES, defaultUiLanguage: DEFAULT_UI_LANGUAGE }
+) {
   const normalized = String(value || "").trim().toLowerCase();
   return config.supportedUiLanguages.includes(normalized) ? normalized : config.defaultUiLanguage;
 }
 
 export function mapLocaleToUiLanguage(locale) {
   return String(locale || "").toLowerCase().startsWith("de") ? "de" : "en";
-}
-
-export function getDefaultSiteCode(elements, config, documentRef = document) {
-  const configured = elements.siteCodeSelect
-    ? String(elements.siteCodeSelect.dataset.defaultSiteCode || "").trim()
-    : "";
-  const fromCookie = readCookie(config.cookieNames.siteCode, documentRef);
-
-  if (fromCookie && config.supportedSiteCodes.includes(fromCookie)) {
-    return fromCookie;
-  }
-
-  return config.supportedSiteCodes.includes(configured) ? configured : config.siteCodeFallback;
 }
 
 export function getDefaultLocale(elements, config, documentRef = document) {
@@ -132,15 +107,6 @@ export function getDefaultUiLanguage(config, windowRef = window, documentRef = d
   return config.supportedUiLanguages.includes(browserLanguage) ? browserLanguage : config.defaultUiLanguage;
 }
 
-export function getSelectedSiteCode(elements, config, fallback = "") {
-  if (!elements.siteCodeSelect) {
-    return fallback || config.siteCodeFallback;
-  }
-
-  const selected = String(elements.siteCodeSelect.value || "").trim();
-  return config.supportedSiteCodes.includes(selected) ? selected : (fallback || config.siteCodeFallback);
-}
-
 export function getSelectedLocale(elements, config, fallback = "") {
   if (!elements.localeSelect) {
     return fallback || config.defaultLocale;
@@ -148,30 +114,4 @@ export function getSelectedLocale(elements, config, fallback = "") {
 
   const selected = String(elements.localeSelect.value || "").trim();
   return config.supportedLocales.includes(selected) ? selected : (fallback || config.defaultLocale);
-}
-
-function getConfiguredSiteCodes(siteCodeSelect) {
-  if (!siteCodeSelect) {
-    return [];
-  }
-
-  const configValue = String(siteCodeSelect.dataset.supportedSiteCodes || "").trim();
-  if (configValue === "") {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(configValue);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    const normalized = parsed
-      .map((value) => String(value || "").trim())
-      .filter((value) => value !== "");
-
-    return [...new Set(normalized)];
-  } catch (error) {
-    return [];
-  }
 }
