@@ -133,6 +133,12 @@ p a {
   max-height: 520px;
 }
 
+.api-console {
+  max-height: 60vh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
 ::selection {
   background: rgba(20, 90, 255, 0.18);
   color: #0f172a;
