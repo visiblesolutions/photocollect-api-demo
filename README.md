@@ -34,11 +34,36 @@ The browser JavaScript is organized as native ES modules under `public/assets/ap
 
 ## Deploy checklist
 
-1. Build frontend assets before deploy: `npm install && npm run build:css`
+1. Build frontend assets before deploy: `npm ci && npm run build:css`
 2. Deploy app/runtime files only: `public/`, `src/`, `templates/`, `config/`, `vendor/`, `composer.*`
 3. Do not deploy `node_modules/` (build-time only)
 4. Ensure your web server document root points to `public/`
 5. Ensure production `config/app.ini` exists with valid API credentials
+
+### Automatic deployment with GitHub Actions
+
+The workflow in `.github/workflows/workflow.yml` deploys pushes to `main` over SFTP.
+You can also run **Deploy Photo Collect API Demo** manually from the Actions tab, selecting `main`.
+
+Configure these repository settings under **Settings → Secrets and variables → Actions**:
+
+| Type | Name | Value |
+| --- | --- | --- |
+| Secret | `SFTP_HOST` | SFTP server hostname |
+| Secret | `SFTP_USER` | SFTP username |
+| Secret | `SFTP_PASSWORD` | SFTP password |
+| Variable | `SFTP_REMOTE_PATH` | Absolute application directory for `apidemo.photocollect.io`, containing `public/`, `src/`, and `config/` |
+
+The server must support SFTP on port 22 and PHP 8.3 or newer. Set the site's document root to
+`<SFTP_REMOTE_PATH>/public` and create `<SFTP_REMOTE_PATH>/config/app.ini` from
+`config/app.ini.example` with production credentials before the first deployment.
+
+The workflow builds CSS with Node.js 22, installs production Composer dependencies with PHP 8.3,
+and uploads `public/`, `src/`, `templates/`, `vendor/`, `composer.json`, `composer.lock`, and
+`config/app.ini.example`. Full synchronization uploads files without deleting remote files, preserving
+the server's `config/app.ini`. Remove obsolete application files from the server manually when needed.
+After uploading, the workflow downloads the deployment action's `.deploy-revision` marker and checks
+that it matches the deployed Git commit.
 
 
 ## Live Demo
