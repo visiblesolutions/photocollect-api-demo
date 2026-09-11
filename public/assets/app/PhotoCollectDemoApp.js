@@ -22,13 +22,15 @@ const IFRAME_PROCESS_STEP_MESSAGE_TYPE = "photo-collect:process-step";
 const IFRAME_MIN_HEIGHT = 420;
 const DEFAULT_BACKGROUND_COLOR_PICKER = "#FFFFFF";
 const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/i;
+const ENHANCEMENT_PROMPTS = ["template:enhanced", "template:businesscasual", "template:astronaut"];
 const DEFAULT_CONFIG_OPTIONS = Object.freeze({
   collect_signature_request: false,
   collect_customerto_request: false,
   collect_verification_required: false,
   firstgate_check_smile: false,
   firstgate_check_sunglasses: true,
-  image_background_color: ""
+  image_background_color: "",
+  image_enhance_genai_prompt: ""
 });
 
 function escapeHtml(value) {
@@ -152,6 +154,7 @@ export class PhotoCollectDemoApp {
       collectMissingContactToggle,
       collectSignatureToggle,
       doVerificationToggle,
+      enhancementsSelect,
       linkInlineRetryButton,
       localeSelect,
       logoHomeButton,
@@ -173,7 +176,8 @@ export class PhotoCollectDemoApp {
       collectMissingContactToggle,
       doVerificationToggle,
       rejectSmilesToggle,
-      rejectSunglassesToggle
+      rejectSunglassesToggle,
+      enhancementsSelect
     ].forEach((control) => {
       control?.addEventListener("change", () => {
         this.state.configOptions = this.getSelectedConfigOptions();
@@ -286,7 +290,10 @@ export class PhotoCollectDemoApp {
       firstgate_check_sunglasses: typeof configOptions.firstgate_check_sunglasses === "boolean"
         ? configOptions.firstgate_check_sunglasses
         : DEFAULT_CONFIG_OPTIONS.firstgate_check_sunglasses,
-      image_background_color: normalizeHexColor(configOptions.image_background_color)
+      image_background_color: normalizeHexColor(configOptions.image_background_color),
+      image_enhance_genai_prompt: ENHANCEMENT_PROMPTS.includes(configOptions.image_enhance_genai_prompt)
+        ? configOptions.image_enhance_genai_prompt
+        : ""
     };
   }
 
@@ -299,12 +306,17 @@ export class PhotoCollectDemoApp {
       firstgate_check_sunglasses: this.elements.rejectSunglassesToggle
         ? Boolean(this.elements.rejectSunglassesToggle.checked)
         : DEFAULT_CONFIG_OPTIONS.firstgate_check_sunglasses,
-      image_background_color: this.elements.backgroundColorHexInput?.value || ""
+      image_background_color: this.elements.backgroundColorHexInput?.value || "",
+      image_enhance_genai_prompt: this.elements.enhancementsSelect?.value || ""
     });
   }
 
   syncConfigOptions() {
     this.state.configOptions = this.sanitizeConfigOptions(this.state.configOptions);
+
+    if (this.elements.enhancementsSelect) {
+      this.elements.enhancementsSelect.value = this.state.configOptions.image_enhance_genai_prompt;
+    }
 
     if (this.elements.collectSignatureToggle) {
       this.elements.collectSignatureToggle.checked = this.state.configOptions.collect_signature_request;
@@ -1066,6 +1078,12 @@ export class PhotoCollectDemoApp {
     const backgroundColor = normalizeHexColor(this.state.configOptions.image_background_color);
     if (backgroundColor) {
       config.image_background_color = backgroundColor;
+    }
+
+    const enhancementPrompt = this.state.configOptions.image_enhance_genai_prompt;
+    if (ENHANCEMENT_PROMPTS.includes(enhancementPrompt)) {
+      config.image_enhance_genai_enabled = true;
+      config.image_enhance_genai_prompt = enhancementPrompt;
     }
 
     Object.entries(extraConfig).forEach(([key, value]) => {

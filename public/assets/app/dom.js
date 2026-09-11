@@ -16,6 +16,7 @@ export function collectElements(documentRef = document) {
     rejectSunglassesToggle: byId(documentRef, "rejectSunglassesToggle"),
     backgroundColorPicker: byId(documentRef, "backgroundColorPicker"),
     backgroundColorHexInput: byId(documentRef, "backgroundColorHexInput"),
+    enhancementsSelect: byId(documentRef, "enhancementsSelect"),
     localeSelect: byId(documentRef, "localeSelect"),
     startDeeplinkButton: byId(documentRef, "startDeeplink"),
     startDeeplinkIframeButton: byId(documentRef, "startDeeplinkIframe"),

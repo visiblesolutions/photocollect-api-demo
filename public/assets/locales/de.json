@@ -31,7 +31,14 @@
       "doVerification": "Verifikation durchführen",
       "rejectSmiles": "Lächeln ablehnen",
       "rejectSunglasses": "Sonnenbrillen ablehnen",
-      "backgroundColor": "Hintergrundfarbe"
+      "backgroundColor": "Hintergrundfarbe",
+      "enhancements": "Verbesserungen"
+    },
+    "enhancementOptions": {
+      "none": "Keine",
+      "enhanced": "Beleuchtung verbessern",
+      "businesscasual": "Business-Kleidung",
+      "astronaut": "Astronaut"
     },
     "backgroundColorPlaceholder": "#RRGGBB",
     "processLocaleLabel": "Prozesssprache (locale)",

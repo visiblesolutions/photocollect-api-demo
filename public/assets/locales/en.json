@@ -31,7 +31,14 @@
       "doVerification": "Do Verification",
       "rejectSmiles": "Reject Smiles",
       "rejectSunglasses": "Reject Sunglasses",
-      "backgroundColor": "Background Color"
+      "backgroundColor": "Background Color",
+      "enhancements": "Enhancements"
+    },
+    "enhancementOptions": {
+      "none": "None",
+      "enhanced": "Enhance lighting",
+      "businesscasual": "Business clothes",
+      "astronaut": "Astronaut"
     },
     "backgroundColorPlaceholder": "#RRGGBB",
     "processLocaleLabel": "Process language (locale)",

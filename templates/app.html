@@ -243,11 +243,20 @@
               </div>
 
               <div class="config-group">
-                <label for="backgroundColorHexInput" class="mb-2 block text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.configGroups.image">Image</label>
-                <p class="mb-2 text-sm font-semibold text-slate-800" data-i18n="start.configFields.backgroundColor">Background Color</p>
+                <p class="mb-2 text-sm font-semibold tracking-[0.18em] text-slate-500" data-i18n="start.configGroups.image">Image</p>
+                <label for="backgroundColorHexInput" class="mb-2 block text-sm font-semibold text-slate-800" data-i18n="start.configFields.backgroundColor">Background Color</label>
                 <div class="config-color-row">
                   <input id="backgroundColorPicker" type="color" value="#FFFFFF" class="config-color-picker rounded-2xl border border-slate-300 bg-white shadow-sm">
                   <input id="backgroundColorHexInput" type="text" inputmode="text" placeholder="#RRGGBB" class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20" data-i18n-attr="placeholder:start.backgroundColorPlaceholder">
+                </div>
+                <div class="mt-4">
+                  <label for="enhancementsSelect" class="mb-2 block text-sm font-semibold text-slate-800" data-i18n="start.configFields.enhancements">Enhancements</label>
+                  <select id="enhancementsSelect" class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
+                    <option value="" selected data-i18n="start.enhancementOptions.none">None</option>
+                    <option value="template:enhanced" data-i18n="start.enhancementOptions.enhanced">Enhance lighting</option>
+                    <option value="template:businesscasual" data-i18n="start.enhancementOptions.businesscasual">Business clothes</option>
+                    <option value="template:astronaut" data-i18n="start.enhancementOptions.astronaut">Astronaut</option>
+                  </select>
                 </div>
               </div>
             </div>
