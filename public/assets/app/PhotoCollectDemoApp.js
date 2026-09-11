@@ -27,10 +27,11 @@ const DEFAULT_CONFIG_OPTIONS = Object.freeze({
   collect_signature_request: false,
   collect_customerto_request: false,
   collect_verification_required: false,
-  firstgate_check_smile: false,
+  firstgate_check_smile: true,
   firstgate_check_sunglasses: true,
+  firstgate_check_heavyframes: true,
   image_background_color: "",
-  image_enhance_genai_prompt: ""
+  image_enhance_genai_prompt: "template:enhanced"
 });
 
 function escapeHtml(value) {
@@ -161,6 +162,7 @@ export class PhotoCollectDemoApp {
       refreshCustomerNoButton,
       rejectSmilesToggle,
       rejectSunglassesToggle,
+      rejectHeavyFramesToggle,
       retryFetchButton,
       startApiButton,
       startDeeplinkButton,
@@ -177,6 +179,7 @@ export class PhotoCollectDemoApp {
       doVerificationToggle,
       rejectSmilesToggle,
       rejectSunglassesToggle,
+      rejectHeavyFramesToggle,
       enhancementsSelect
     ].forEach((control) => {
       control?.addEventListener("change", () => {
@@ -290,6 +293,9 @@ export class PhotoCollectDemoApp {
       firstgate_check_sunglasses: typeof configOptions.firstgate_check_sunglasses === "boolean"
         ? configOptions.firstgate_check_sunglasses
         : DEFAULT_CONFIG_OPTIONS.firstgate_check_sunglasses,
+      firstgate_check_heavyframes: typeof configOptions.firstgate_check_heavyframes === "boolean"
+        ? configOptions.firstgate_check_heavyframes
+        : DEFAULT_CONFIG_OPTIONS.firstgate_check_heavyframes,
       image_background_color: normalizeHexColor(configOptions.image_background_color),
       image_enhance_genai_prompt: ENHANCEMENT_PROMPTS.includes(configOptions.image_enhance_genai_prompt)
         ? configOptions.image_enhance_genai_prompt
@@ -306,6 +312,9 @@ export class PhotoCollectDemoApp {
       firstgate_check_sunglasses: this.elements.rejectSunglassesToggle
         ? Boolean(this.elements.rejectSunglassesToggle.checked)
         : DEFAULT_CONFIG_OPTIONS.firstgate_check_sunglasses,
+      firstgate_check_heavyframes: this.elements.rejectHeavyFramesToggle
+        ? Boolean(this.elements.rejectHeavyFramesToggle.checked)
+        : DEFAULT_CONFIG_OPTIONS.firstgate_check_heavyframes,
       image_background_color: this.elements.backgroundColorHexInput?.value || "",
       image_enhance_genai_prompt: this.elements.enhancementsSelect?.value || ""
     });
@@ -336,6 +345,10 @@ export class PhotoCollectDemoApp {
 
     if (this.elements.rejectSunglassesToggle) {
       this.elements.rejectSunglassesToggle.checked = this.state.configOptions.firstgate_check_sunglasses;
+    }
+
+    if (this.elements.rejectHeavyFramesToggle) {
+      this.elements.rejectHeavyFramesToggle.checked = this.state.configOptions.firstgate_check_heavyframes;
     }
 
     if (this.elements.backgroundColorPicker) {
@@ -635,6 +648,7 @@ export class PhotoCollectDemoApp {
       this.elements.doVerificationToggle,
       this.elements.rejectSmilesToggle,
       this.elements.rejectSunglassesToggle,
+      this.elements.rejectHeavyFramesToggle,
       this.elements.backgroundColorPicker,
       this.elements.backgroundColorHexInput,
       this.elements.localeSelect,
@@ -1072,7 +1086,8 @@ export class PhotoCollectDemoApp {
       collect_customerto_request: this.state.configOptions.collect_customerto_request,
       collect_verification_required: this.state.configOptions.collect_verification_required,
       firstgate_check_smile: this.state.configOptions.firstgate_check_smile,
-      firstgate_check_sunglasses: this.state.configOptions.firstgate_check_sunglasses
+      firstgate_check_sunglasses: this.state.configOptions.firstgate_check_sunglasses,
+      firstgate_check_heavyframes: this.state.configOptions.firstgate_check_heavyframes
     };
 
     const backgroundColor = normalizeHexColor(this.state.configOptions.image_background_color);

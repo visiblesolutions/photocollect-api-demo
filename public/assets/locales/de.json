@@ -40,9 +40,10 @@
     "configFields": {
       "collectSignature": "Unterschrift erfassen",
       "collectMissingContact": "Fehlenden Kontakt erfassen",
-      "doVerification": "Verifikation durchführen",
+      "doVerification": "Lebenderkennung",
       "rejectSmiles": "Lächeln ablehnen",
       "rejectSunglasses": "Sonnenbrillen ablehnen",
+      "rejectHeavyFrames": "Dicke Brillenrahmen ablehnen",
       "backgroundColor": "Hintergrundfarbe",
       "enhancements": "Verbesserungen"
     },

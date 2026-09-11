@@ -20,6 +20,7 @@ const BOOLEAN_REQUEST_CONFIG_KEYS = [
     'collect_verification_required',
     'firstgate_check_smile',
     'firstgate_check_sunglasses',
+    'firstgate_check_heavyframes',
 ];
 
 /**

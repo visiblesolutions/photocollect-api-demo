@@ -40,9 +40,10 @@
     "configFields": {
       "collectSignature": "Collect Signature",
       "collectMissingContact": "Collect Missing Contact",
-      "doVerification": "Do Verification",
+      "doVerification": "Liveness Verification",
       "rejectSmiles": "Reject Smiles",
       "rejectSunglasses": "Reject Sunglasses",
+      "rejectHeavyFrames": "Reject Heavy Frames",
       "backgroundColor": "Background Color",
       "enhancements": "Enhancements"
     },

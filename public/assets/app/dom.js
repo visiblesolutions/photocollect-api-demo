@@ -14,6 +14,7 @@ export function collectElements(documentRef = document) {
     doVerificationToggle: byId(documentRef, "doVerificationToggle"),
     rejectSmilesToggle: byId(documentRef, "rejectSmilesToggle"),
     rejectSunglassesToggle: byId(documentRef, "rejectSunglassesToggle"),
+    rejectHeavyFramesToggle: byId(documentRef, "rejectHeavyFramesToggle"),
     backgroundColorPicker: byId(documentRef, "backgroundColorPicker"),
     backgroundColorHexInput: byId(documentRef, "backgroundColorHexInput"),
     enhancementsSelect: byId(documentRef, "enhancementsSelect"),

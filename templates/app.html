@@ -99,7 +99,7 @@
                   </label>
 
                   <label class="config-toggle">
-                    <span class="config-toggle__label" data-i18n="start.configFields.doVerification">Do Verification</span>
+                    <span class="config-toggle__label" data-i18n="start.configFields.doVerification">Liveness Verification</span>
                     <span class="inline-flex items-center">
                       <input id="doVerificationToggle" type="checkbox" class="sr-only">
                       <span class="config-toggle__switch" aria-hidden="true"></span>
@@ -114,7 +114,7 @@
                   <label class="config-toggle">
                     <span class="config-toggle__label" data-i18n="start.configFields.rejectSmiles">Reject Smiles</span>
                     <span class="inline-flex items-center">
-                      <input id="rejectSmilesToggle" type="checkbox" class="sr-only">
+                      <input id="rejectSmilesToggle" type="checkbox" class="sr-only" checked>
                       <span class="config-toggle__switch" aria-hidden="true"></span>
                     </span>
                   </label>
@@ -123,6 +123,14 @@
                     <span class="config-toggle__label" data-i18n="start.configFields.rejectSunglasses">Reject Sunglasses</span>
                     <span class="inline-flex items-center">
                       <input id="rejectSunglassesToggle" type="checkbox" class="sr-only" checked>
+                      <span class="config-toggle__switch" aria-hidden="true"></span>
+                    </span>
+                  </label>
+
+                  <label class="config-toggle">
+                    <span class="config-toggle__label" data-i18n="start.configFields.rejectHeavyFrames">Reject Heavy Frames</span>
+                    <span class="inline-flex items-center">
+                      <input id="rejectHeavyFramesToggle" type="checkbox" class="sr-only" checked>
                       <span class="config-toggle__switch" aria-hidden="true"></span>
                     </span>
                   </label>
@@ -139,8 +147,8 @@
                 <div class="mt-4">
                   <label for="enhancementsSelect" class="mb-2 block text-sm font-semibold text-slate-800" data-i18n="start.configFields.enhancements">Enhancements</label>
                   <select id="enhancementsSelect" class="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none ring-brand focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20">
-                    <option value="" selected data-i18n="start.enhancementOptions.none">None</option>
-                    <option value="template:enhanced" data-i18n="start.enhancementOptions.enhanced">Enhance lighting</option>
+                    <option value="" data-i18n="start.enhancementOptions.none">None</option>
+                    <option value="template:enhanced" selected data-i18n="start.enhancementOptions.enhanced">Enhance lighting</option>
                     <option value="template:businesscasual" data-i18n="start.enhancementOptions.businesscasual">Business clothes</option>
                     <option value="template:astronaut" data-i18n="start.enhancementOptions.astronaut">Astronaut</option>
                   </select>
