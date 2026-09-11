@@ -2,12 +2,12 @@
 module.exports = {
   content: [
     "./templates/app.html",
-    "./public/assets/app.js"
+    "./public/assets/**/*.js"
   ],
   theme: {
     extend: {
       colors: {
-        brand: "#145aff"
+        brand: "#1557ff"
       },
       boxShadow: {
         soft: "0 30px 90px rgba(20, 90, 255, 0.15)"

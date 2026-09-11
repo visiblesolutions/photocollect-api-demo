@@ -10,10 +10,22 @@
     "notSet": "-"
   },
   "navigation": {
-    "backToStart": "Back to start"
+    "backToStart": "Back to start",
+    "getStarted": "Get started",
+    "overview": "Overview",
+    "guide": "Integration guide",
+    "demo": "Demo application",
+    "reference": "API reference",
+    "iframe": "iFrame integration",
+    "note": "Explore the API. Try the complete photo workflow.",
+    "documentation": "API documentation",
+    "external": " (opens in a new tab)"
   },
   "header": {
-    "websiteLanguage": "Language"
+    "websiteLanguage": "Language",
+    "demo": "Demo",
+    "docs": "Documentation",
+    "theme": "Toggle color theme"
   },
   "start": {
     "title": "Integration Demo",
@@ -31,7 +43,14 @@
       "doVerification": "Do Verification",
       "rejectSmiles": "Reject Smiles",
       "rejectSunglasses": "Reject Sunglasses",
-      "backgroundColor": "Background Color"
+      "backgroundColor": "Background Color",
+      "enhancements": "Enhancements"
+    },
+    "enhancementOptions": {
+      "none": "None",
+      "enhanced": "Enhance lighting",
+      "businesscasual": "Business clothes",
+      "astronaut": "Astronaut"
     },
     "backgroundColorPlaceholder": "#RRGGBB",
     "processLocaleLabel": "Process language (locale)",
@@ -56,7 +75,8 @@
         "description": "API call.",
         "cta": "Continue"
       }
-    }
+    },
+    "eyebrow": "Interactive demo"
   },
   "link": {
     "processStepLabel": "Process step:",

@@ -10,10 +10,22 @@
     "notSet": "-"
   },
   "navigation": {
-    "backToStart": "Zur Startseite"
+    "backToStart": "Zur Startseite",
+    "getStarted": "Erste Schritte",
+    "overview": "Übersicht",
+    "guide": "Integrationsleitfaden",
+    "demo": "Demo-Anwendung",
+    "reference": "API-Referenz",
+    "iframe": "iFrame-Integration",
+    "note": "Entdecken Sie die API und testen Sie den gesamten Fotoablauf.",
+    "documentation": "API-Dokumentation",
+    "external": " (öffnet in einem neuen Tab)"
   },
   "header": {
-    "websiteLanguage": "Sprache"
+    "websiteLanguage": "Sprache",
+    "demo": "Demo",
+    "docs": "Dokumentation",
+    "theme": "Farbschema wechseln"
   },
   "start": {
     "title": "Integrationsdemo",
@@ -31,7 +43,14 @@
       "doVerification": "Verifikation durchführen",
       "rejectSmiles": "Lächeln ablehnen",
       "rejectSunglasses": "Sonnenbrillen ablehnen",
-      "backgroundColor": "Hintergrundfarbe"
+      "backgroundColor": "Hintergrundfarbe",
+      "enhancements": "Verbesserungen"
+    },
+    "enhancementOptions": {
+      "none": "Keine",
+      "enhanced": "Beleuchtung verbessern",
+      "businesscasual": "Business-Kleidung",
+      "astronaut": "Astronaut"
     },
     "backgroundColorPlaceholder": "#RRGGBB",
     "processLocaleLabel": "Prozesssprache (locale)",
@@ -56,7 +75,8 @@
         "description": "API-Aufruf.",
         "cta": "Weiter"
       }
-    }
+    },
+    "eyebrow": "Interaktive Demo"
   },
   "link": {
     "processStepLabel": "Prozessschritt:",
