@@ -25,6 +25,15 @@ const BOOLEAN_REQUEST_CONFIG_KEYS = [
     'firstgate_check_heavyframes',
 ];
 
+function normalizeRequestString(mixed $candidate, string $field): string
+{
+    if ($candidate !== null && !is_scalar($candidate)) {
+        throw new InvalidArgumentException(sprintf('The %s field must be scalar.', $field));
+    }
+
+    return trim((string) $candidate);
+}
+
 /**
  * Accept a small, explicit subset of config values from the demo UI and reject
  * anything that cannot be represented safely in the downstream API payload.
@@ -48,7 +57,7 @@ function normalizeRequestConfig(mixed $candidate): ?array
         }
 
         if ($normalizedKey === 'image_background_color') {
-            $normalizedColor = strtoupper(trim((string) $value));
+            $normalizedColor = strtoupper(normalizeRequestString($value, $normalizedKey));
             if ($normalizedColor !== '' && !preg_match('/^#[0-9A-Fa-f]{6}$/', $normalizedColor)) {
                 throw new InvalidArgumentException('The image_background_color value must use the format #RRGGBB.');
             }
@@ -81,7 +90,7 @@ function normalizeRequestConfig(mixed $candidate): ?array
 
 function resolveLocale(mixed $candidate): string
 {
-    $locale = trim((string) $candidate);
+    $locale = normalizeRequestString($candidate, 'locale');
 
     return in_array($locale, SUPPORTED_LOCALES, true) ? $locale : DEFAULT_LOCALE;
 }
@@ -103,7 +112,7 @@ function generateCustomerNo(): string
     return substr(bin2hex(random_bytes(8)), 0, 16);
 }
 
-$config = parse_ini_file(APP_CONFIG_PATH, false, INI_SCANNER_TYPED);
+$config = @parse_ini_file(APP_CONFIG_PATH, false, INI_SCANNER_TYPED);
 if ($config === false) {
     throw new RuntimeException('Unable to load config/app.ini.');
 }
@@ -115,6 +124,12 @@ $missingConfigKeys = array_filter(
 );
 if ($missingConfigKeys !== []) {
     throw new RuntimeException('Missing required config key(s) in config/app.ini: ' . implode(', ', $missingConfigKeys));
+}
+
+foreach ($requiredConfigKeys as $key) {
+    if (!is_scalar($config[$key])) {
+        throw new RuntimeException(sprintf('The config key %s must be scalar in config/app.ini.', $key));
+    }
 }
 
 // This demo uses one configured site code so the UI can focus on launch options.
@@ -150,13 +165,17 @@ $creationGuard = new CreationRateLimitMiddleware(
 );
 
 $app->get('/', function (Request $request, Response $response) use ($baseHref, $config): Response {
-    $template = file_get_contents(APP_TEMPLATE_PATH);
+    $template = @file_get_contents(APP_TEMPLATE_PATH);
     if ($template === false) {
         throw new RuntimeException('Unable to load templates/app.html.');
     }
 
     $queryParams = $request->getQueryParams();
-    $customerNo = trim((string) ($queryParams['customer_no'] ?? ''));
+    try {
+        $customerNo = normalizeRequestString($queryParams['customer_no'] ?? null, 'customer_no');
+    } catch (InvalidArgumentException $exception) {
+        return writeJson($response, ['error' => $exception->getMessage()], 400);
+    }
 
     if ($customerNo === '') {
         $customerNo = generateCustomerNo();
@@ -195,11 +214,11 @@ $app->get('/', function (Request $request, Response $response) use ($baseHref, $
 
 $app->post('/api/deeplink', function (Request $request, Response $response) use ($baseHref, $client, $siteCode): Response {
     $data = (array) $request->getParsedBody();
-    $customerNo = trim((string) ($data['customer_no'] ?? ''));
-    $locale = resolveLocale($data['locale'] ?? null);
-    $flow = trim((string) ($data['flow'] ?? ''));
 
     try {
+        $customerNo = normalizeRequestString($data['customer_no'] ?? null, 'customer_no');
+        $locale = resolveLocale($data['locale'] ?? null);
+        $flow = normalizeRequestString($data['flow'] ?? null, 'flow');
         $requestConfig = normalizeRequestConfig($data['config'] ?? null);
     } catch (InvalidArgumentException $exception) {
         return writeJson($response, ['error' => $exception->getMessage()], 400);
@@ -254,10 +273,10 @@ $app->post('/api/deeplink', function (Request $request, Response $response) use 
 
 $app->post('/api/invitation', function (Request $request, Response $response) use ($client): Response {
     $data = (array) $request->getParsedBody();
-    $customerNo = trim((string) ($data['customer_no'] ?? ''));
-    $locale = resolveLocale($data['locale'] ?? null);
 
     try {
+        $customerNo = normalizeRequestString($data['customer_no'] ?? null, 'customer_no');
+        $locale = resolveLocale($data['locale'] ?? null);
         $requestConfig = normalizeRequestConfig($data['config'] ?? null);
     } catch (InvalidArgumentException $exception) {
         return writeJson($response, ['error' => $exception->getMessage()], 400);
@@ -279,7 +298,11 @@ $app->post('/api/invitation', function (Request $request, Response $response) us
 })->add($creationGuard);
 
 $app->get('/api/export', function (Request $request, Response $response) use ($client): Response {
-    $customerNo = trim((string) ($request->getQueryParams()['customer_no'] ?? ''));
+    try {
+        $customerNo = normalizeRequestString($request->getQueryParams()['customer_no'] ?? null, 'customer_no');
+    } catch (InvalidArgumentException $exception) {
+        return writeJson($response, ['error' => $exception->getMessage()], 400);
+    }
     if ($customerNo === '') {
         return writeJson($response, ['error' => 'The customer_no query parameter is required.'], 400);
     }

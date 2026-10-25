@@ -35,6 +35,11 @@ shared rate-limit backend. Changing `deeplink_secret` resets visitor identities.
 
 Run the guard checks with `php tests/creation_rate_limit.php`.
 
+Run `php -d error_reporting=E_ALL -d display_errors=1 tests/php_compatibility.php`
+with PHP 8.3 and PHP 8.4 to check request validation, upstream response handling,
+and configuration failures for warnings and deprecations. These checks use dummy
+credentials, mocked API responses, and temporary storage.
+
 ## Install
 
 Use a php web server.

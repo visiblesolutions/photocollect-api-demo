@@ -107,7 +107,7 @@ final class PhotoCollectClient
             body: $payload,
         );
 
-        $invitationUrl = (string) ($response['invitation_url'] ?? '');
+        $invitationUrl = $this->responseString($response, 'invitation_url');
         if ($invitationUrl === '') {
             throw new RuntimeException('Photo Collect did not return an invitation_url.');
         }
@@ -115,7 +115,7 @@ final class PhotoCollectClient
         return [
             'customer_no' => $customerNo,
             'site_code' => $siteCode,
-            'invitation_key' => (string) ($response['invitation_key'] ?? ''),
+            'invitation_key' => $this->responseString($response, 'invitation_key'),
             'invitation_url' => $invitationUrl,
             'raw_response' => $response,
         ];
@@ -141,7 +141,10 @@ final class PhotoCollectClient
         );
 
         $files = $response['files'] ?? [];
-        if (!is_array($files) || $files === []) {
+        if (!is_array($files)) {
+            throw new RuntimeException('Photo Collect returned an invalid files collection.');
+        }
+        if ($files === []) {
             return [
                 'status' => 'pending',
                 'customer_no' => $customerNo,
@@ -150,9 +153,15 @@ final class PhotoCollectClient
             ];
         }
 
-        usort($files, static function (array $left, array $right): int {
-            $leftTimestamp = (string) ($left['uploaded_at'] ?? $left['exported_at'] ?? '');
-            $rightTimestamp = (string) ($right['uploaded_at'] ?? $right['exported_at'] ?? '');
+        foreach ($files as $file) {
+            if (!is_array($file)) {
+                throw new RuntimeException('Photo Collect returned an invalid export entry.');
+            }
+        }
+
+        usort($files, function (array $left, array $right): int {
+            $leftTimestamp = $this->responseString($left, isset($left['uploaded_at']) ? 'uploaded_at' : 'exported_at');
+            $rightTimestamp = $this->responseString($right, isset($right['uploaded_at']) ? 'uploaded_at' : 'exported_at');
 
             return strcmp($leftTimestamp, $rightTimestamp);
         });
@@ -167,10 +176,12 @@ final class PhotoCollectClient
             ];
         }
 
-        $mimeType = (string) ($file['file_type'] ?? 'image/jpeg');
+        // Validate content before deleting the upstream export.
+        $fileContent = $this->responseString($file, 'file_content');
+        $mimeType = $this->responseString($file, 'file_type', 'image/jpeg');
         $deleteResult = null;
         $deleteWarning = null;
-        $invitationKey = trim((string) ($file['invitation_key'] ?? ''));
+        $invitationKey = trim($this->responseString($file, 'invitation_key'));
 
         if ($invitationKey !== '') {
             try {
@@ -184,7 +195,7 @@ final class PhotoCollectClient
             'status' => 'ready',
             'customer_no' => $customerNo,
             'site_code' => $siteCode,
-            'image_url' => sprintf('data:%s;base64,%s', $mimeType, $file['file_content']),
+            'image_url' => sprintf('data:%s;base64,%s', $mimeType, $fileContent),
             'file' => $file,
         ];
 
@@ -202,6 +213,16 @@ final class PhotoCollectClient
     private function resolveSiteCode(): string
     {
         return $this->siteCode;
+    }
+
+    private function responseString(array $response, string $key, string $default = ''): string
+    {
+        $value = $response[$key] ?? $default;
+        if (!is_scalar($value)) {
+            throw new RuntimeException(sprintf('Photo Collect returned an invalid %s value.', $key));
+        }
+
+        return (string) $value;
     }
 
     private function normalizeInvitationConfig(?array $config): array
@@ -324,13 +345,13 @@ final class PhotoCollectClient
             throw new RuntimeException('Photo Collect returned an invalid JSON response.', 0, $exception);
         }
 
-        if ($statusCode >= 400) {
-            $error = (string) ($decoded['error'] ?? ('Photo Collect returned HTTP ' . $statusCode . '.'));
-            throw new RuntimeException($error);
-        }
-
         if (!is_array($decoded)) {
             throw new RuntimeException('Photo Collect returned an unexpected response format.');
+        }
+
+        if ($statusCode >= 400) {
+            $error = $this->responseString($decoded, 'error', 'Photo Collect returned HTTP ' . $statusCode . '.');
+            throw new RuntimeException($error);
         }
 
         return $decoded;
