@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\CreationRateLimiter;
+use App\CreationRateLimitMiddleware;
 use App\PhotoCollectClient;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -141,6 +143,12 @@ $client = new PhotoCollectClient(
     deeplinkSecret: (string) $config['deeplink_secret'],
 );
 
+$creationGuard = new CreationRateLimitMiddleware(
+    limiter: new CreationRateLimiter(__DIR__ . '/../var/rate-limits'),
+    responseFactory: $app->getResponseFactory(),
+    identitySecret: (string) $config['deeplink_secret'],
+);
+
 $app->get('/', function (Request $request, Response $response) use ($baseHref, $config): Response {
     $template = file_get_contents(APP_TEMPLATE_PATH);
     if ($template === false) {
@@ -242,7 +250,7 @@ $app->post('/api/deeplink', function (Request $request, Response $response) use 
     } catch (Throwable $exception) {
         return writeJson($response, ['error' => $exception->getMessage()], 502);
     }
-});
+})->add($creationGuard);
 
 $app->post('/api/invitation', function (Request $request, Response $response) use ($client): Response {
     $data = (array) $request->getParsedBody();
@@ -268,7 +276,7 @@ $app->post('/api/invitation', function (Request $request, Response $response) us
     } catch (Throwable $exception) {
         return writeJson($response, ['error' => $exception->getMessage()], 502);
     }
-});
+})->add($creationGuard);
 
 $app->get('/api/export', function (Request $request, Response $response) use ($client): Response {
     $customerNo = trim((string) ($request->getQueryParams()['customer_no'] ?? ''));

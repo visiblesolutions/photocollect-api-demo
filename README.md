@@ -11,6 +11,30 @@ This is a demo for the Photo Collect flow:
 Runtime settings are stored in config/app.ini. Take the structure from config/app.ini.example.
 Use a single `site_code` entry there; the app no longer supports a list of site codes.
 
+## Creation limit
+
+`POST /api/invitation` and `POST /api/deeplink` (including the iframe flow) share
+a limit of 20 attempts per client IP address in a rolling 24-hour window. The
+demo has no login, so the server uses `REMOTE_ADDR` as the visitor identity;
+changing customer numbers, cookies, or forwarded headers does not reset the limit.
+Visitors sharing a public IP also share the quota. If a reverse proxy is used,
+configure the web server to resolve the real client address from trusted proxies
+only, otherwise all visitors will share the proxy's quota.
+
+Attempts are reserved before creation, including failed requests, so concurrent
+requests or upstream failures cannot bypass the guard. Blocked requests return
+HTTP 429 with a JSON error and `Retry-After` in seconds. Export polling remains
+available. Storage failures block creation with HTTP 503.
+
+The PHP process must be able to create and write `var/rate-limits/` outside the
+public document root. Keep this directory across deployments; it contains keyed
+hashes of addresses and recent attempt timestamps, with expired entries pruned
+on subsequent writes. A file lock and atomic snapshot replacement protect
+concurrent requests on a single server. Multiple application servers require a
+shared rate-limit backend. Changing `deeplink_secret` resets visitor identities.
+
+Run the guard checks with `php tests/creation_rate_limit.php`.
+
 ## Install
 
 Use a php web server.
@@ -39,6 +63,7 @@ The browser JavaScript is organized as native ES modules under `public/assets/ap
 3. Do not deploy `node_modules/` (build-time only)
 4. Ensure your web server document root points to `public/`
 5. Ensure production `config/app.ini` exists with valid API credentials
+6. Ensure PHP can create/write `var/rate-limits/` and preserve it across deployments
 
 ### Automatic deployment with GitHub Actions
 

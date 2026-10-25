@@ -61,6 +61,9 @@ jobs:
           --no-progress
           --optimize-autoloader
 
+      - name: Check creation rate limit
+        run: php tests/creation_rate_limit.php
+
       - name: Prepare deployment package
         run: |
           mkdir -p deployment/config
